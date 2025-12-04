@@ -1,0 +1,90 @@
+name: Pomodoro
+options:
+  bundleIdPrefix: com.bdogellis
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  SWIFT_VERSION: "5.9"
+  DEVELOPMENT_TEAM: ""
+
+targets:
+  Pomodoro:
+    type: application
+    platform: iOS
+    sources:
+      - path: Pomodoro
+        excludes:
+          - "**/.DS_Store"
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      INFOPLIST_FILE: Pomodoro/Info.plist
+      PRODUCT_BUNDLE_IDENTIFIER: com.bdogellis.pomodoro
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      SUPPORTED_INTERFACE_ORIENTATIONS: "UIInterfaceOrientationPortrait"
+      SUPPORTED_INTERFACE_ORIENTATIONS_IPAD: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+    info:
+      path: Pomodoro/Info.plist
+      properties:
+        CFBundleDisplayName: Pomodoro
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  PomodoroWatch Watch App:
+    type: application
+    platform: watchOS
+    sources:
+      - path: PomodoroWatch
+        excludes:
+          - "**/.DS_Store"
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      INFOPLIST_FILE: PomodoroWatch/Info.plist
+      PRODUCT_BUNDLE_IDENTIFIER: com.bdogellis.pomodoro.watchkitapp
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      WATCHOS_DEPLOYMENT_TARGET: "10.0"
+    info:
+      path: PomodoroWatch/Info.plist
+      properties:
+        CFBundleDisplayName: Pomodoro
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.bdogellis.pomodoro
+    dependencies:
+      - target: Pomodoro
+        embed: false
+        link: false
+
+schemes:
+  Pomodoro:
+    build:
+      targets:
+        Pomodoro: all
+        PomodoroWatch Watch App: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
