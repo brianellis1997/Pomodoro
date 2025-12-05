@@ -8,6 +8,7 @@ struct PomodoroApp: App {
             Routine.self,
             StudySession.self,
             UserStats.self,
+            AppSettings.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

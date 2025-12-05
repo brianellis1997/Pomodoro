@@ -1,6 +1,32 @@
 import Foundation
 import SwiftData
 
+struct DailyStats: Identifiable {
+    let id = UUID()
+    let date: Date
+    let minutes: Int
+    let sessions: Int
+
+    var dayLabel: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date)
+    }
+
+    var shortDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d"
+        return formatter.string(from: date)
+    }
+}
+
+struct RoutineUsage: Identifiable {
+    let id = UUID()
+    let name: String
+    let count: Int
+    let totalMinutes: Int
+}
+
 @MainActor
 class StatsService: ObservableObject {
     private var modelContext: ModelContext?
@@ -16,6 +42,10 @@ class StatsService: ObservableObject {
 
     @Published var userStats: UserStats?
 
+    @Published var weeklyData: [DailyStats] = []
+    @Published var monthlyData: [DailyStats] = []
+    @Published var routineUsage: [RoutineUsage] = []
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
         loadStats()
@@ -26,6 +56,8 @@ class StatsService: ObservableObject {
 
         loadUserStats(context: context)
         calculateTimeStats(context: context)
+        calculateChartData(context: context)
+        calculateRoutineUsage(context: context)
     }
 
     private func loadUserStats(context: ModelContext) {
@@ -181,6 +213,66 @@ class StatsService: ObservableObject {
                 return "\(hours)h"
             }
             return "\(hours)h \(mins)m"
+        }
+    }
+
+    private func calculateChartData(context: ModelContext) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        var weekly: [DailyStats] = []
+        for dayOffset in (0..<7).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { continue }
+            let nextDay = calendar.date(byAdding: .day, value: 1, to: date) ?? date
+
+            let stats = fetchDayStats(from: date, to: nextDay, context: context)
+            weekly.append(stats)
+        }
+        weeklyData = weekly
+
+        var monthly: [DailyStats] = []
+        for dayOffset in (0..<30).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { continue }
+            let nextDay = calendar.date(byAdding: .day, value: 1, to: date) ?? date
+
+            let stats = fetchDayStats(from: date, to: nextDay, context: context)
+            monthly.append(stats)
+        }
+        monthlyData = monthly
+    }
+
+    private func fetchDayStats(from startDate: Date, to endDate: Date, context: ModelContext) -> DailyStats {
+        let predicate = #Predicate<StudySession> { session in
+            session.completedAt >= startDate && session.completedAt < endDate
+        }
+        let descriptor = FetchDescriptor<StudySession>(predicate: predicate)
+
+        do {
+            let sessions = try context.fetch(descriptor)
+            let totalMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
+            return DailyStats(date: startDate, minutes: totalMinutes, sessions: sessions.count)
+        } catch {
+            return DailyStats(date: startDate, minutes: 0, sessions: 0)
+        }
+    }
+
+    private func calculateRoutineUsage(context: ModelContext) {
+        let descriptor = FetchDescriptor<StudySession>()
+
+        do {
+            let sessions = try context.fetch(descriptor)
+
+            var usageDict: [String: (count: Int, minutes: Int)] = [:]
+            for session in sessions {
+                let current = usageDict[session.routineName] ?? (0, 0)
+                usageDict[session.routineName] = (current.count + 1, current.minutes + session.durationMinutes)
+            }
+
+            routineUsage = usageDict.map { name, data in
+                RoutineUsage(name: name, count: data.count, totalMinutes: data.minutes)
+            }.sorted { $0.count > $1.count }
+        } catch {
+            routineUsage = []
         }
     }
 }

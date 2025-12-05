@@ -6,14 +6,12 @@ struct MainTabView: View {
     @StateObject private var timerViewModel = TimerViewModel()
     @StateObject private var statsService = StatsService()
     @State private var selectedTab = 0
-    @State private var currentRoutineName = "Classic Pomodoro"
 
     var body: some View {
         TabView(selection: $selectedTab) {
             TimerTab(
                 timerViewModel: timerViewModel,
-                statsService: statsService,
-                currentRoutineName: $currentRoutineName
+                statsService: statsService
             )
             .tabItem {
                 Label("Timer", systemImage: "timer")
@@ -28,13 +26,18 @@ struct MainTabView: View {
 
             RoutineBuilderView { routine in
                 timerViewModel.configure(routine: routine)
-                currentRoutineName = routine.name
                 selectedTab = 0
             }
             .tabItem {
                 Label("Routines", systemImage: "list.bullet.rectangle")
             }
             .tag(2)
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
+                .tag(3)
         }
         .tint(.pomodoroRed)
         .onAppear {
@@ -46,7 +49,6 @@ struct MainTabView: View {
 struct TimerTab: View {
     @ObservedObject var timerViewModel: TimerViewModel
     @ObservedObject var statsService: StatsService
-    @Binding var currentRoutineName: String
 
     @State private var sessionStartTime: Date?
     @State private var showCompletionAlert = false
@@ -58,7 +60,7 @@ struct TimerTab: View {
 
             VStack {
                 HStack {
-                    Text(currentRoutineName)
+                    Text(timerViewModel.currentRoutineName)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 12)
@@ -105,7 +107,7 @@ struct TimerTab: View {
     private func recordCompletedSession() {
         let workDuration = Int(timerViewModel.engine.workDuration / 60)
         statsService.recordSession(
-            routineName: currentRoutineName,
+            routineName: timerViewModel.currentRoutineName,
             durationMinutes: workDuration,
             wasFullSession: true
         )

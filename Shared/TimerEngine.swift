@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-enum TimerPhase: String, Codable {
+enum TimerPhase: String, Codable, Hashable {
     case work
     case shortBreak
     case longBreak

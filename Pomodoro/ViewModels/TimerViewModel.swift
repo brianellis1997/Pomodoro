@@ -1,10 +1,14 @@
 import Foundation
 import SwiftUI
 import Combine
+import WidgetKit
 
 @MainActor
 class TimerViewModel: ObservableObject {
     @Published var engine = TimerEngine()
+    @Published var currentRoutineName: String = "Classic Pomodoro"
+
+    private let liveActivityManager = LiveActivityManager.shared
 
     var timeRemaining: TimeInterval { engine.timeRemaining }
     var totalTime: TimeInterval { engine.totalTime }
@@ -41,6 +45,7 @@ class TimerViewModel: ObservableObject {
         engine.objectWillChange
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
+                self?.syncLiveActivity()
             }
             .store(in: &cancellables)
     }
@@ -51,21 +56,53 @@ class TimerViewModel: ObservableObject {
         } else {
             engine.start()
         }
+        syncLiveActivity()
     }
 
     func reset() {
         engine.reset()
+        liveActivityManager.endActivity()
+        syncWidgetData()
     }
 
     func skip() {
         engine.skip()
+        syncLiveActivity()
     }
 
     func configure(routine: Routine) {
+        currentRoutineName = routine.name
         engine.configure(routine: routine.configuration)
+        syncWidgetData()
     }
 
     func configure(with config: RoutineConfiguration) {
+        currentRoutineName = config.name
         engine.configure(routine: config)
+        syncWidgetData()
+    }
+
+    private func syncLiveActivity() {
+        liveActivityManager.syncTimerState(
+            timeRemaining: timeRemaining,
+            totalTime: totalTime,
+            phase: phase,
+            currentRound: currentRound,
+            totalRounds: totalRounds,
+            isRunning: isRunning,
+            routineName: currentRoutineName
+        )
+    }
+
+    private func syncWidgetData() {
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        defaults?.set(timeRemaining, forKey: "remainingTime")
+        defaults?.set(totalTime, forKey: "totalTime")
+        defaults?.set(phase.rawValue, forKey: "phase")
+        defaults?.set(currentRound, forKey: "currentRound")
+        defaults?.set(totalRounds, forKey: "totalRounds")
+        defaults?.set(isRunning, forKey: "isRunning")
+        defaults?.set(currentRoutineName, forKey: "routineName")
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
