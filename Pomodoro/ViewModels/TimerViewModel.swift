@@ -62,6 +62,10 @@ class TimerViewModel: ObservableObject {
     }
 
     func configure(routine: Routine) {
-        engine.configure(routine: routine)
+        engine.configure(routine: routine.configuration)
+    }
+
+    func configure(with config: RoutineConfiguration) {
+        engine.configure(routine: config)
     }
 }

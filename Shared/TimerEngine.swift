@@ -144,7 +144,7 @@ class TimerEngine: ObservableObject {
         timeRemaining = workDuration
     }
 
-    func configure(routine: Routine) {
+    func configure(routine: RoutineConfiguration) {
         workDuration = TimeInterval(routine.workDuration * 60)
         shortBreakDuration = TimeInterval(routine.shortBreakDuration * 60)
         longBreakDuration = TimeInterval(routine.longBreakDuration * 60)

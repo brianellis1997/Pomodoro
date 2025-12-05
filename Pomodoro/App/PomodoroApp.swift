@@ -6,7 +6,8 @@ struct PomodoroApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Routine.self,
-            TimerSession.self,
+            StudySession.self,
+            UserStats.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -19,7 +20,7 @@ struct PomodoroApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
         .modelContainer(sharedModelContainer)
     }

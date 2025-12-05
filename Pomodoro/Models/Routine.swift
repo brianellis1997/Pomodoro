@@ -68,4 +68,15 @@ final class Routine {
             totalRounds: 8
         )
     }
+
+    var configuration: RoutineConfiguration {
+        RoutineConfiguration(
+            name: name,
+            workDuration: workDuration,
+            shortBreakDuration: shortBreakDuration,
+            longBreakDuration: longBreakDuration,
+            roundsBeforeLongBreak: roundsBeforeLongBreak,
+            totalRounds: totalRounds
+        )
+    }
 }

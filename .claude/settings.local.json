@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild:*)",
+      "Bash(swift --version:*)",
+      "Bash(brew --version:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(open:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
