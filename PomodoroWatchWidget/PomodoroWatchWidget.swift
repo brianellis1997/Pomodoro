@@ -173,22 +173,15 @@ struct PomodoroWatchWidgetEntryView: View {
                 .rotationEffect(.degrees(-90))
                 .scaleEffect(x: -1, y: 1)
 
-            VStack(spacing: -2) {
-                Image("TomatoIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                Text(entry.shortTimeString)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-            }
+            Text(entry.shortTimeString)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
         }
         .padding(2)
     }
 
     private var accessoryCorner: some View {
-        Image("TomatoIcon")
-            .resizable()
-            .scaledToFit()
+        Text(entry.shortTimeString)
+            .font(.system(size: 14, weight: .bold, design: .rounded))
             .widgetCurvesContent()
             .widgetLabel {
                 ProgressView(value: entry.progress)
@@ -234,11 +227,8 @@ struct PomodoroWatchWidgetEntryView: View {
     }
 
     private var accessoryInline: some View {
-        HStack(spacing: 4) {
-            Image(systemName: entry.phase == .work ? "brain.head.profile" : "cup.and.saucer.fill")
-            Text(entry.timeString)
-                .monospacedDigit()
-        }
+        Text(entry.timeString)
+            .monospacedDigit()
     }
 }
 
