@@ -49,6 +49,7 @@ struct MainTabView: View {
 struct TimerTab: View {
     @ObservedObject var timerViewModel: TimerViewModel
     @ObservedObject var statsService: StatsService
+    @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
 
     @State private var sessionStartTime: Date?
     @State private var showCompletionAlert = false
@@ -60,12 +61,47 @@ struct TimerTab: View {
 
             VStack {
                 HStack {
-                    Text(timerViewModel.currentRoutineName)
+                    Menu {
+                        Section("Presets") {
+                            ForEach(RoutineConfiguration.presets, id: \.name) { preset in
+                                Button {
+                                    timerViewModel.configure(with: preset)
+                                } label: {
+                                    if timerViewModel.currentRoutineName == preset.name {
+                                        Label(preset.name, systemImage: "checkmark")
+                                    } else {
+                                        Text(preset.name)
+                                    }
+                                }
+                            }
+                        }
+                        if !customRoutines.isEmpty {
+                            Section("Your Routines") {
+                                ForEach(customRoutines) { routine in
+                                    Button {
+                                        timerViewModel.configure(routine: routine)
+                                    } label: {
+                                        if timerViewModel.currentRoutineName == routine.name {
+                                            Label(routine.name, systemImage: "checkmark")
+                                        } else {
+                                            Text(routine.name)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(timerViewModel.currentRoutineName)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                        }
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(Color.backgroundSecondary))
+                    }
 
                     Spacer()
 
