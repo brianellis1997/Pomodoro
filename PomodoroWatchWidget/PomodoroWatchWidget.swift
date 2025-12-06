@@ -173,8 +173,14 @@ struct PomodoroWatchWidgetEntryView: View {
                 .rotationEffect(.degrees(-90))
                 .scaleEffect(x: -1, y: 1)
 
-            Text(entry.shortTimeString)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+            VStack(spacing: -2) {
+                Image("TomatoIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                Text(entry.shortTimeString)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+            }
         }
         .padding(2)
     }
