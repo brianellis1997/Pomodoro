@@ -351,6 +351,7 @@ struct ScheduledSession: Identifiable {
 
 struct AddScheduledSessionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
     @State private var routineName = "Classic Pomodoro"
     @State private var date = Date()
     @State private var repeatPattern: ScheduledSession.RepeatPattern = .none
@@ -361,8 +362,17 @@ struct AddScheduledSessionView: View {
         NavigationView {
             Form {
                 Picker("Routine", selection: $routineName) {
-                    ForEach(RoutineConfiguration.presets, id: \.name) { preset in
-                        Text(preset.name).tag(preset.name)
+                    Section("Presets") {
+                        ForEach(RoutineConfiguration.presets, id: \.name) { preset in
+                            Text(preset.name).tag(preset.name)
+                        }
+                    }
+                    if !customRoutines.isEmpty {
+                        Section("Your Routines") {
+                            ForEach(customRoutines) { routine in
+                                Text(routine.name).tag(routine.name)
+                            }
+                        }
                     }
                 }
 

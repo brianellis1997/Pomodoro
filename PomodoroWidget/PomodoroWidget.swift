@@ -30,13 +30,18 @@ struct PomodoroProvider: TimelineProvider {
     private func loadCurrentEntry() -> PomodoroEntry {
         let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
 
-        let remainingTime = defaults?.double(forKey: "remainingTime") ?? 25 * 60
-        let totalTime = defaults?.double(forKey: "totalTime") ?? 25 * 60
+        let storedRemainingTime = defaults?.double(forKey: "remainingTime") ?? 0
+        let storedTotalTime = defaults?.double(forKey: "totalTime") ?? 0
         let phaseRaw = defaults?.string(forKey: "phase") ?? "work"
-        let currentRound = defaults?.integer(forKey: "currentRound") ?? 1
-        let totalRounds = defaults?.integer(forKey: "totalRounds") ?? 4
+        let storedCurrentRound = defaults?.integer(forKey: "currentRound")
+        let storedTotalRounds = defaults?.integer(forKey: "totalRounds")
         let isRunning = defaults?.bool(forKey: "isRunning") ?? false
         let routineName = defaults?.string(forKey: "routineName") ?? "Classic Pomodoro"
+
+        let remainingTime = storedRemainingTime > 0 ? storedRemainingTime : 25 * 60
+        let totalTime = storedTotalTime > 0 ? storedTotalTime : 25 * 60
+        let currentRound = (storedCurrentRound ?? 0) > 0 ? storedCurrentRound! : 1
+        let totalRounds = (storedTotalRounds ?? 0) > 0 ? storedTotalRounds! : 4
 
         let phase: TimerPhase
         switch phaseRaw {

@@ -48,6 +48,8 @@ class TimerViewModel: ObservableObject {
                 self?.syncLiveActivity()
             }
             .store(in: &cancellables)
+
+        syncWidgetData()
     }
 
     func startPause() {
