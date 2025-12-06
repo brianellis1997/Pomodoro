@@ -178,7 +178,7 @@ struct PomodoroWatchWidgetEntryView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 20, height: 20)
-                Text(entry.shortTimeString)
+                Text(entry.timeString)
                     .font(.system(size: 10, weight: .bold, design: .rounded))
             }
         }
@@ -186,8 +186,8 @@ struct PomodoroWatchWidgetEntryView: View {
     }
 
     private var accessoryCorner: some View {
-        Text(entry.shortTimeString)
-            .font(.system(size: 14, weight: .bold, design: .rounded))
+        Text(entry.timeString)
+            .font(.system(size: 12, weight: .bold, design: .rounded))
             .widgetCurvesContent()
             .widgetLabel {
                 ProgressView(value: entry.progress)
