@@ -1,9 +1,15 @@
 import SwiftUI
+import Combine
+import WidgetKit
 
 struct WatchTimerView: View {
     @StateObject private var engine = TimerEngine()
+    @StateObject private var connectivityManager = WatchConnectivityManager.shared
     @State private var currentRoutineName = "Classic Pomodoro"
     @State private var showRoutinePicker = false
+    @State private var syncedRoutines: [RoutineTransfer] = []
+
+    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
 
     var body: some View {
         NavigationStack {
@@ -27,27 +33,17 @@ struct WatchTimerView: View {
                     .foregroundColor(phaseColor)
                     .textCase(.uppercase)
 
-                ZStack {
-                    Circle()
-                        .stroke(phaseColor.opacity(0.2), lineWidth: 8)
+                VStack(spacing: 4) {
+                    Text(engine.formattedTime)
+                        .font(.system(size: 48, weight: .medium, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(phaseColor)
 
-                    Circle()
-                        .trim(from: 0, to: engine.progress)
-                        .stroke(phaseColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-
-                    VStack(spacing: 2) {
-                        Text(engine.formattedTime)
-                            .font(.system(.title2, design: .rounded))
-                            .fontWeight(.medium)
-                            .monospacedDigit()
-
-                        Text("Round \(engine.currentRound)/\(engine.totalRounds)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    Text("Round \(engine.currentRound)/\(engine.totalRounds)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
 
                 HStack(spacing: 20) {
                     Button(action: engine.reset) {
@@ -83,10 +79,42 @@ struct WatchTimerView: View {
             .sheet(isPresented: $showRoutinePicker) {
                 WatchRoutinePickerView(
                     selectedRoutineName: $currentRoutineName,
-                    engine: engine
+                    engine: engine,
+                    syncedRoutines: syncedRoutines
                 )
             }
+            .onAppear {
+                connectivityManager.requestRoutines()
+                syncWidgetData()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .routinesReceived)) { notification in
+                if let routines = notification.object as? [RoutineTransfer] {
+                    syncedRoutines = routines
+                }
+            }
+            .onReceive(engine.objectWillChange) { _ in
+                syncWidgetData()
+            }
         }
+    }
+
+    private func syncWidgetData() {
+        defaults?.set(engine.timeRemaining, forKey: "remainingTime")
+        defaults?.set(engine.totalTime, forKey: "totalTime")
+        defaults?.set(engine.phase.rawValue, forKey: "phase")
+        defaults?.set(engine.currentRound, forKey: "currentRound")
+        defaults?.set(engine.totalRounds, forKey: "totalRounds")
+        defaults?.set(engine.state == .running, forKey: "isRunning")
+        defaults?.set(currentRoutineName, forKey: "routineName")
+
+        if engine.state == .running {
+            let endTime = Date().addingTimeInterval(engine.timeRemaining)
+            defaults?.set(endTime.timeIntervalSince1970, forKey: "endTime")
+        } else {
+            defaults?.removeObject(forKey: "endTime")
+        }
+
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private var phaseColor: Color {
@@ -105,27 +133,65 @@ struct WatchRoutinePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedRoutineName: String
     let engine: TimerEngine
+    let syncedRoutines: [RoutineTransfer]
 
     var body: some View {
         List {
-            ForEach(RoutineConfiguration.presets, id: \.name) { preset in
-                Button {
-                    selectedRoutineName = preset.name
-                    engine.configure(routine: preset)
-                    dismiss()
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(preset.name)
-                                .font(.caption)
-                            Text("\(preset.workDuration)m / \(preset.shortBreakDuration)m")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+            Section("Presets") {
+                ForEach(RoutineConfiguration.presets, id: \.name) { preset in
+                    Button {
+                        selectedRoutineName = preset.name
+                        engine.configure(routine: preset)
+                        dismiss()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(preset.name)
+                                    .font(.caption)
+                                Text("\(preset.workDuration)m / \(preset.shortBreakDuration)m")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if selectedRoutineName == preset.name {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.pomodoroRed)
+                            }
                         }
-                        Spacer()
-                        if selectedRoutineName == preset.name {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.pomodoroRed)
+                    }
+                }
+            }
+
+            if !syncedRoutines.isEmpty {
+                Section("Your Routines") {
+                    ForEach(syncedRoutines, id: \.id) { routine in
+                        Button {
+                            selectedRoutineName = routine.name
+                            let config = RoutineConfiguration(
+                                name: routine.name,
+                                workDuration: routine.workDuration,
+                                shortBreakDuration: routine.shortBreakDuration,
+                                longBreakDuration: routine.longBreakDuration,
+                                roundsBeforeLongBreak: routine.roundsBeforeLongBreak,
+                                totalRounds: routine.totalRounds
+                            )
+                            engine.configure(routine: config)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(routine.name)
+                                        .font(.caption)
+                                    Text("\(routine.workDuration)m / \(routine.shortBreakDuration)m")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if selectedRoutineName == routine.name {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.pomodoroRed)
+                                }
+                            }
                         }
                     }
                 }

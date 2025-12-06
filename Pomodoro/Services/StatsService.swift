@@ -58,6 +58,15 @@ class StatsService: ObservableObject {
         calculateTimeStats(context: context)
         calculateChartData(context: context)
         calculateRoutineUsage(context: context)
+        syncStatsToWatch()
+    }
+
+    private func syncStatsToWatch() {
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        defaults?.set(userStats?.totalSessionsCompleted ?? 0, forKey: "stats_totalSessions")
+        defaults?.set(userStats?.totalMinutesStudied ?? 0, forKey: "stats_totalMinutes")
+        defaults?.set(userStats?.currentStreak ?? 0, forKey: "stats_currentStreak")
+        defaults?.set(todaySessions, forKey: "stats_todaySessions")
     }
 
     private func loadUserStats(context: ModelContext) {

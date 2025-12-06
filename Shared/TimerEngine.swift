@@ -31,8 +31,8 @@ class TimerEngine: ObservableObject {
     var roundsBeforeLongBreak: Int = 4
 
     var progress: Double {
-        guard totalTime > 0 else { return 0 }
-        return 1.0 - (timeRemaining / totalTime)
+        guard totalTime > 0 else { return 1 }
+        return timeRemaining / totalTime
     }
 
     var formattedTime: String {

@@ -35,6 +35,20 @@
                ReferencedContainer = "container:Pomodoro.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "50C6C3B5CD979C85E4E0181C"
+               BuildableName = "PomodoroWatchWidget.appex"
+               BlueprintName = "PomodoroWatchWidget"
+               ReferencedContainer = "container:Pomodoro.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

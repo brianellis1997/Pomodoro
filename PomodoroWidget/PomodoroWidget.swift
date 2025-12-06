@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 struct PomodoroProvider: TimelineProvider {
     func placeholder(in context: Context) -> PomodoroEntry {
@@ -16,21 +17,47 @@ struct PomodoroProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PomodoroEntry) -> Void) {
-        let entry = loadCurrentEntry()
+        let entry = loadCurrentEntry(for: Date())
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PomodoroEntry>) -> Void) {
-        let entry = loadCurrentEntry()
-        let nextUpdate = Calendar.current.date(byAdding: .second, value: 1, to: Date())!
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let isRunning = defaults?.bool(forKey: "isRunning") ?? false
+        let endTimeInterval = defaults?.double(forKey: "endTime") ?? 0
+
+        if isRunning && endTimeInterval > 0 {
+            let endTime = Date(timeIntervalSince1970: endTimeInterval)
+            let now = Date()
+
+            if endTime > now {
+                var entries: [PomodoroEntry] = []
+                var currentDate = now
+
+                while currentDate < endTime && entries.count < 120 {
+                    let entry = loadCurrentEntry(for: currentDate, endTime: endTime)
+                    entries.append(entry)
+                    currentDate = currentDate.addingTimeInterval(15)
+                }
+
+                let finalEntry = loadCurrentEntry(for: endTime, endTime: endTime)
+                entries.append(finalEntry)
+
+                let timeline = Timeline(entries: entries, policy: .after(endTime))
+                completion(timeline)
+                return
+            }
+        }
+
+        let entry = loadCurrentEntry(for: Date())
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 5, to: Date())!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
 
-    private func loadCurrentEntry() -> PomodoroEntry {
+    private func loadCurrentEntry(for date: Date, endTime: Date? = nil) -> PomodoroEntry {
         let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
 
-        let storedRemainingTime = defaults?.double(forKey: "remainingTime") ?? 0
         let storedTotalTime = defaults?.double(forKey: "totalTime") ?? 0
         let phaseRaw = defaults?.string(forKey: "phase") ?? "work"
         let storedCurrentRound = defaults?.integer(forKey: "currentRound")
@@ -38,10 +65,17 @@ struct PomodoroProvider: TimelineProvider {
         let isRunning = defaults?.bool(forKey: "isRunning") ?? false
         let routineName = defaults?.string(forKey: "routineName") ?? "Classic Pomodoro"
 
-        let remainingTime = storedRemainingTime > 0 ? storedRemainingTime : 25 * 60
         let totalTime = storedTotalTime > 0 ? storedTotalTime : 25 * 60
         let currentRound = (storedCurrentRound ?? 0) > 0 ? storedCurrentRound! : 1
         let totalRounds = (storedTotalRounds ?? 0) > 0 ? storedTotalRounds! : 4
+
+        let remainingTime: TimeInterval
+        if let endTime = endTime, isRunning {
+            remainingTime = max(0, endTime.timeIntervalSince(date))
+        } else {
+            let storedRemainingTime = defaults?.double(forKey: "remainingTime") ?? 0
+            remainingTime = storedRemainingTime > 0 ? storedRemainingTime : 25 * 60
+        }
 
         let phase: TimerPhase
         switch phaseRaw {
@@ -51,7 +85,7 @@ struct PomodoroProvider: TimelineProvider {
         }
 
         return PomodoroEntry(
-            date: Date(),
+            date: date,
             remainingTime: remainingTime,
             totalTime: totalTime,
             phase: phase,
@@ -74,8 +108,8 @@ struct PomodoroEntry: TimelineEntry {
     let routineName: String
 
     var progress: Double {
-        guard totalTime > 0 else { return 0 }
-        return 1.0 - (remainingTime / totalTime)
+        guard totalTime > 0 else { return 1 }
+        return remainingTime / totalTime
     }
 
     var timeString: String {
@@ -155,7 +189,7 @@ struct PomodoroWidgetEntryView: View {
     }
 
     private var mediumWidget: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .stroke(Color.gray.opacity(0.3), lineWidth: 8)
@@ -166,50 +200,48 @@ struct PomodoroWidgetEntryView: View {
                     .rotationEffect(.degrees(-90))
 
                 Text(entry.timeString)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .monospacedDigit()
             }
-            .frame(width: 100, height: 100)
+            .frame(width: 90, height: 90)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(entry.routineName)
-                    .font(.headline)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .lineLimit(1)
 
                 Text(entry.phaseLabel)
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(entry.phaseColor)
 
-                HStack(spacing: 4) {
-                    Text("Round \(entry.currentRound)/\(entry.totalRounds)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text("Round \(entry.currentRound)/\(entry.totalRounds)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
 
                 Spacer()
-
-                if entry.isRunning {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 6, height: 6)
-                        Text("Running")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                } else {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(.orange)
-                            .frame(width: 6, height: 6)
-                        Text("Paused")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
             }
 
             Spacer()
+
+            VStack(spacing: 8) {
+                Button(intent: ToggleTimerIntent()) {
+                    Image(systemName: entry.isRunning ? "pause.fill" : "play.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(entry.phaseColor)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Button(intent: ResetTimerIntent()) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding()
         .containerBackground(for: .widget) {
@@ -218,7 +250,7 @@ struct PomodoroWidgetEntryView: View {
     }
 
     private var largeWidget: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Text(entry.routineName)
                 .font(.headline)
 
@@ -233,7 +265,7 @@ struct PomodoroWidgetEntryView: View {
 
                 VStack(spacing: 4) {
                     Text(entry.timeString)
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .font(.system(size: 44, weight: .bold, design: .rounded))
                         .monospacedDigit()
 
                     Text(entry.phaseLabel)
@@ -241,24 +273,46 @@ struct PomodoroWidgetEntryView: View {
                         .foregroundColor(entry.phaseColor)
                 }
             }
-            .frame(width: 180, height: 180)
+            .frame(width: 160, height: 160)
 
             HStack(spacing: 8) {
                 ForEach(0..<entry.totalRounds, id: \.self) { index in
                     Circle()
                         .fill(index < entry.currentRound ? entry.phaseColor : Color.gray.opacity(0.3))
-                        .frame(width: 12, height: 12)
+                        .frame(width: 10, height: 10)
                 }
             }
 
-            if entry.isRunning {
-                Label("Timer Running", systemImage: "timer")
-                    .font(.caption)
-                    .foregroundColor(.green)
-            } else {
-                Label("Timer Paused", systemImage: "pause.circle")
-                    .font(.caption)
-                    .foregroundColor(.orange)
+            HStack(spacing: 24) {
+                Button(intent: ResetTimerIntent()) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                        .frame(width: 44, height: 44)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Button(intent: ToggleTimerIntent()) {
+                    Image(systemName: entry.isRunning ? "pause.fill" : "play.fill")
+                        .font(.title)
+                        .foregroundColor(.white)
+                        .frame(width: 60, height: 60)
+                        .background(entry.phaseColor)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Button(intent: SkipPhaseIntent()) {
+                    Image(systemName: "forward.fill")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                        .frame(width: 44, height: 44)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
         }
         .containerBackground(for: .widget) {

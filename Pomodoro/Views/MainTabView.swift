@@ -3,6 +3,8 @@ import SwiftData
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var routineSyncService: RoutineSyncService
     @StateObject private var timerViewModel = TimerViewModel()
     @StateObject private var statsService = StatsService()
     @State private var selectedTab = 0
@@ -42,6 +44,12 @@ struct MainTabView: View {
         .tint(.pomodoroRed)
         .onAppear {
             statsService.setModelContext(modelContext)
+            routineSyncService.setModelContext(modelContext)
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .active {
+                timerViewModel.checkPendingWidgetActions()
+            }
         }
     }
 }

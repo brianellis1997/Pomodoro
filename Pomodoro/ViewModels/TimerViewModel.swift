@@ -46,10 +46,42 @@ class TimerViewModel: ObservableObject {
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
                 self?.syncLiveActivity()
+                self?.syncWidgetData()
             }
             .store(in: &cancellables)
 
         syncWidgetData()
+        checkPendingWidgetActions()
+    }
+
+    func checkPendingWidgetActions() {
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+
+        guard defaults?.bool(forKey: "pendingAction") == true else { return }
+
+        let actionType = defaults?.string(forKey: "actionType") ?? ""
+
+        defaults?.set(false, forKey: "pendingAction")
+        defaults?.removeObject(forKey: "actionType")
+
+        switch actionType {
+        case "start":
+            if !isRunning {
+                engine.start()
+                syncLiveActivity()
+            }
+        case "pause":
+            if isRunning {
+                engine.pause()
+                syncLiveActivity()
+            }
+        case "reset":
+            reset()
+        case "skip":
+            skip()
+        default:
+            break
+        }
     }
 
     func startPause() {
@@ -105,6 +137,14 @@ class TimerViewModel: ObservableObject {
         defaults?.set(totalRounds, forKey: "totalRounds")
         defaults?.set(isRunning, forKey: "isRunning")
         defaults?.set(currentRoutineName, forKey: "routineName")
+
+        if isRunning {
+            let endTime = Date().addingTimeInterval(timeRemaining)
+            defaults?.set(endTime.timeIntervalSince1970, forKey: "endTime")
+        } else {
+            defaults?.removeObject(forKey: "endTime")
+        }
+
         WidgetCenter.shared.reloadAllTimelines()
     }
 }

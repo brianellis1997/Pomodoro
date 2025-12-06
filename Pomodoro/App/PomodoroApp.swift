@@ -1,8 +1,11 @@
 import SwiftUI
 import SwiftData
+import WatchConnectivity
 
 @main
 struct PomodoroApp: App {
+    @StateObject private var routineSyncService = RoutineSyncService()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Routine.self,
@@ -22,6 +25,7 @@ struct PomodoroApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environmentObject(routineSyncService)
         }
         .modelContainer(sharedModelContainer)
     }
