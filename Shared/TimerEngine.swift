@@ -30,6 +30,10 @@ class TimerEngine: ObservableObject {
     var longBreakDuration: TimeInterval = 20 * 60
     var roundsBeforeLongBreak: Int = 4
 
+    var autoStartBreaks: Bool = false
+    var autoStartWork: Bool = false
+    var onPhaseComplete: ((TimerPhase) -> Void)?
+
     var progress: Double {
         guard totalTime > 0 else { return 1 }
         return timeRemaining / totalTime
@@ -110,15 +114,26 @@ class TimerEngine: ObservableObject {
         timer?.invalidate()
         timer = nil
         endDate = nil
-        state = .idle
+
+        let completedPhase = phase
+        onPhaseComplete?(completedPhase)
 
         advancePhase()
+
+        let shouldAutoStart = (completedPhase == .work && autoStartBreaks) ||
+                              ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
+
+        if shouldAutoStart {
+            start()
+        } else {
+            state = .idle
+        }
     }
 
     private func advancePhase() {
         switch phase {
         case .work:
-            if currentRound >= roundsBeforeLongBreak {
+            if currentRound >= totalRounds {
                 phase = .longBreak
                 totalTime = longBreakDuration
             } else {
@@ -126,7 +141,7 @@ class TimerEngine: ObservableObject {
                 totalTime = shortBreakDuration
             }
         case .shortBreak:
-            currentRound += 1
+            currentRound = min(currentRound + 1, totalRounds)
             phase = .work
             totalTime = workDuration
         case .longBreak:

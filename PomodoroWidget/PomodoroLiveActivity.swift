@@ -73,7 +73,7 @@ struct LockScreenView: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 6)
+                    .stroke(Color.white.opacity(0.3), lineWidth: 6)
                     .frame(width: 60, height: 60)
 
                 Circle()
@@ -90,18 +90,20 @@ struct LockScreenView: View {
                 Text(context.state.timeString)
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .monospacedDigit()
+                    .foregroundColor(.white)
 
                 HStack {
                     Text(context.state.phaseLabel)
                         .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundColor(phaseColor)
 
                     Text("•")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.6))
 
                     Text("Round \(context.state.currentRound)/\(context.state.totalRounds)")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.7))
                 }
             }
 
@@ -111,7 +113,7 @@ struct LockScreenView: View {
                 if context.state.isRunning {
                     Image(systemName: "pause.circle.fill")
                         .font(.title)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.7))
                 } else {
                     Image(systemName: "play.circle.fill")
                         .font(.title)
@@ -120,7 +122,7 @@ struct LockScreenView: View {
             }
         }
         .padding()
-        .activityBackgroundTint(Color.black.opacity(0.8))
+        .activityBackgroundTint(phaseColor.opacity(0.85))
         .activitySystemActionForegroundColor(.white)
     }
 

@@ -23,13 +23,17 @@ class LiveActivityManager: ObservableObject {
             return
         }
 
+        endAllActivities()
+
         let attributes = PomodoroActivityAttributes(routineName: routineName)
         currentRoutineName = routineName
+
+        let staleDate = state.isRunning ? Date().addingTimeInterval(state.remainingTime + 60) : Date().addingTimeInterval(300)
 
         do {
             currentActivity = try Activity.request(
                 attributes: attributes,
-                content: .init(state: state, staleDate: nil),
+                content: .init(state: state, staleDate: staleDate),
                 pushType: nil
             )
             syncToWidget(state: state, routineName: routineName)
@@ -41,11 +45,21 @@ class LiveActivityManager: ObservableObject {
     func updateActivity(state: PomodoroActivityAttributes.ContentState) {
         guard let activity = currentActivity else { return }
 
+        let staleDate = state.isRunning ? Date().addingTimeInterval(state.remainingTime + 60) : Date().addingTimeInterval(300)
+
         Task {
             await activity.update(
-                ActivityContent(state: state, staleDate: nil)
+                ActivityContent(state: state, staleDate: staleDate)
             )
             syncToWidget(state: state, routineName: currentRoutineName)
+        }
+    }
+
+    func endAllActivities() {
+        Task {
+            for activity in Activity<PomodoroActivityAttributes>.activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
         }
     }
 

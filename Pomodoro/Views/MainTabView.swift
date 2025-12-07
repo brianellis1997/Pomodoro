@@ -49,6 +49,10 @@ struct MainTabView: View {
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active {
                 timerViewModel.checkPendingWidgetActions()
+            } else if newPhase == .background {
+                if !timerViewModel.isRunning {
+                    LiveActivityManager.shared.endAllActivities()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sessionCompletionReceived)) { notification in
@@ -88,10 +92,15 @@ struct TimerTab: View {
     @ObservedObject var timerViewModel: TimerViewModel
     @ObservedObject var statsService: StatsService
     @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
+    @Query private var settingsArray: [AppSettings]
 
     @State private var sessionStartTime: Date?
     @State private var showCompletionAlert = false
     @State private var earnedPoints = 0
+
+    private var settings: AppSettings? {
+        settingsArray.first
+    }
 
     var body: some View {
         ZStack {
@@ -176,6 +185,22 @@ struct TimerTab: View {
         } message: {
             Text("You earned \(earnedPoints) points!")
         }
+        .onAppear {
+            syncSettings()
+        }
+        .onChange(of: settings?.autoStartBreaks) { _, _ in
+            syncSettings()
+        }
+        .onChange(of: settings?.autoStartWork) { _, _ in
+            syncSettings()
+        }
+    }
+
+    private func syncSettings() {
+        timerViewModel.updateSettings(
+            autoStartBreaks: settings?.autoStartBreaks ?? false,
+            autoStartWork: settings?.autoStartWork ?? false
+        )
     }
 
     private func checkAndRecordSession() {

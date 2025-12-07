@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import WidgetKit
+import UserNotifications
 
 @MainActor
 class TimerViewModel: ObservableObject {
@@ -9,6 +10,7 @@ class TimerViewModel: ObservableObject {
     @Published var currentRoutineName: String = "Classic Pomodoro"
 
     private let liveActivityManager = LiveActivityManager.shared
+    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
 
     var timeRemaining: TimeInterval { engine.timeRemaining }
     var totalTime: TimeInterval { engine.totalTime }
@@ -50,8 +52,116 @@ class TimerViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        engine.onPhaseComplete = { [weak self] completedPhase in
+            self?.handlePhaseComplete(completedPhase)
+        }
+
+        restoreTimerState()
         syncWidgetData()
         checkPendingWidgetActions()
+        requestNotificationPermission()
+    }
+
+    func updateSettings(autoStartBreaks: Bool, autoStartWork: Bool) {
+        engine.autoStartBreaks = autoStartBreaks
+        engine.autoStartWork = autoStartWork
+    }
+
+    private func handlePhaseComplete(_ phase: TimerPhase) {
+        scheduleCompletionNotification(for: phase)
+    }
+
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+    }
+
+    private func scheduleTimerNotification() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timerComplete"])
+
+        guard isRunning else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = phase == .work ? "Focus Session Complete!" : "Break Time Over!"
+        content.body = phase == .work ? "Time for a break. Great work!" : "Ready to focus again?"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeRemaining, repeats: false)
+        let request = UNNotificationRequest(identifier: "timerComplete", content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func cancelTimerNotification() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timerComplete"])
+    }
+
+    private func scheduleCompletionNotification(for phase: TimerPhase) {
+        let content = UNMutableNotificationContent()
+        content.title = phase == .work ? "Focus Session Complete!" : "Break Time Over!"
+        content.body = phase == .work ? "Time for a break. Great work!" : "Ready to focus again?"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(identifier: "phaseComplete-\(UUID().uuidString)", content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func saveTimerState() {
+        defaults?.set(timeRemaining, forKey: "savedTimeRemaining")
+        defaults?.set(totalTime, forKey: "savedTotalTime")
+        defaults?.set(phase.rawValue, forKey: "savedPhase")
+        defaults?.set(currentRound, forKey: "savedCurrentRound")
+        defaults?.set(totalRounds, forKey: "savedTotalRounds")
+        defaults?.set(currentRoutineName, forKey: "savedRoutineName")
+        defaults?.set(isRunning, forKey: "savedIsRunning")
+        defaults?.set(engine.workDuration, forKey: "savedWorkDuration")
+        defaults?.set(engine.shortBreakDuration, forKey: "savedShortBreakDuration")
+        defaults?.set(engine.longBreakDuration, forKey: "savedLongBreakDuration")
+
+        if isRunning {
+            let endTime = Date().addingTimeInterval(timeRemaining)
+            defaults?.set(endTime.timeIntervalSince1970, forKey: "savedEndTime")
+        } else {
+            defaults?.removeObject(forKey: "savedEndTime")
+        }
+    }
+
+    private func restoreTimerState() {
+        guard let savedEndTime = defaults?.double(forKey: "savedEndTime"),
+              savedEndTime > 0,
+              defaults?.bool(forKey: "savedIsRunning") == true else {
+            return
+        }
+
+        let endDate = Date(timeIntervalSince1970: savedEndTime)
+        let now = Date()
+
+        guard endDate > now else {
+            clearSavedState()
+            return
+        }
+
+        if let savedPhase = defaults?.string(forKey: "savedPhase"),
+           let phase = TimerPhase(rawValue: savedPhase) {
+            engine.phase = phase
+        }
+
+        engine.totalTime = defaults?.double(forKey: "savedTotalTime") ?? 25 * 60
+        engine.currentRound = defaults?.integer(forKey: "savedCurrentRound") ?? 1
+        engine.totalRounds = defaults?.integer(forKey: "savedTotalRounds") ?? 4
+        engine.workDuration = defaults?.double(forKey: "savedWorkDuration") ?? 25 * 60
+        engine.shortBreakDuration = defaults?.double(forKey: "savedShortBreakDuration") ?? 5 * 60
+        engine.longBreakDuration = defaults?.double(forKey: "savedLongBreakDuration") ?? 20 * 60
+        currentRoutineName = defaults?.string(forKey: "savedRoutineName") ?? "Classic Pomodoro"
+
+        engine.timeRemaining = endDate.timeIntervalSince(now)
+        engine.start()
+    }
+
+    private func clearSavedState() {
+        defaults?.removeObject(forKey: "savedEndTime")
+        defaults?.removeObject(forKey: "savedIsRunning")
     }
 
     func checkPendingWidgetActions() {
@@ -87,14 +197,19 @@ class TimerViewModel: ObservableObject {
     func startPause() {
         if isRunning {
             engine.pause()
+            cancelTimerNotification()
         } else {
             engine.start()
+            scheduleTimerNotification()
         }
+        saveTimerState()
         syncLiveActivity()
     }
 
     func reset() {
         engine.reset()
+        cancelTimerNotification()
+        clearSavedState()
         liveActivityManager.endActivity()
         syncWidgetData()
     }
