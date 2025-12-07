@@ -11,7 +11,9 @@
       "Bash(xcodegen generate:*)",
       "Bash(/opt/homebrew/Cellar/xcodegen/2.44.1/bin/xcodegen generate)",
       "Bash(xargs ls:*)",
-      "Bash(sips:*)"
+      "Bash(sips:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

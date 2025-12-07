@@ -8,6 +8,10 @@ struct WatchTimerView: View {
     @State private var currentRoutineName = "Classic Pomodoro"
     @State private var showRoutinePicker = false
     @State private var syncedRoutines: [RoutineTransfer] = []
+    @State private var previousPhase: TimerPhase = .work
+    @State private var lastWorkDuration: Int = 25
+    @State private var justSkipped: Bool = false
+    @State private var sessionStartTime: Date?
 
     private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
 
@@ -56,6 +60,9 @@ struct WatchTimerView: View {
                         if engine.state == .running {
                             engine.pause()
                         } else {
+                            if engine.phase == .work && sessionStartTime == nil {
+                                sessionStartTime = Date()
+                            }
                             engine.start()
                         }
                     }) {
@@ -68,7 +75,13 @@ struct WatchTimerView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button(action: engine.skip) {
+                    Button(action: {
+                        if engine.phase == .work {
+                            justSkipped = true
+                            checkAndRecordSession()
+                        }
+                        engine.skip()
+                    }) {
                         Image(systemName: "forward.fill")
                             .font(.body)
                     }
@@ -95,7 +108,45 @@ struct WatchTimerView: View {
             .onReceive(engine.objectWillChange) { _ in
                 syncWidgetData()
             }
+            .onChange(of: engine.phase) { oldPhase, newPhase in
+                if oldPhase == .work && (newPhase == .shortBreak || newPhase == .longBreak) {
+                    if !justSkipped {
+                        checkAndRecordSession()
+                    }
+                    justSkipped = false
+                }
+                previousPhase = newPhase
+            }
+            .onAppear {
+                lastWorkDuration = Int(engine.workDuration / 60)
+            }
         }
+    }
+
+    private func checkAndRecordSession() {
+        let workDurationSeconds = engine.workDuration
+        let workDurationMinutes = Int(workDurationSeconds / 60)
+
+        guard let startTime = sessionStartTime else {
+            return
+        }
+
+        let elapsedTime = Date().timeIntervalSince(startTime)
+        let completionPercentage = elapsedTime / workDurationSeconds
+
+        let minimumThreshold = 0.80
+
+        if completionPercentage >= minimumThreshold {
+            let session = SessionCompletion(
+                routineName: currentRoutineName,
+                durationMinutes: workDurationMinutes,
+                wasFullSession: completionPercentage >= 0.95,
+                completedAt: Date()
+            )
+            connectivityManager.sendSessionCompletion(session)
+        }
+
+        sessionStartTime = nil
     }
 
     private func syncWidgetData() {

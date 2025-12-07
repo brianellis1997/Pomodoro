@@ -12,6 +12,22 @@ struct RoutineTransfer: Codable {
     let totalRounds: Int
 }
 
+struct SessionCompletion: Codable {
+    let routineName: String
+    let durationMinutes: Int
+    let wasFullSession: Bool
+    let completedAt: Date
+}
+
+struct StatsUpdate: Codable {
+    let totalSessions: Int
+    let totalMinutes: Int
+    let currentStreak: Int
+    let todaySessions: Int
+    let totalPoints: Int
+    let level: Int
+}
+
 class WatchConnectivityManager: NSObject, ObservableObject {
     static let shared = WatchConnectivityManager()
 
@@ -92,6 +108,50 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
         session.sendMessage(["requestRoutines": true], replyHandler: nil, errorHandler: nil)
     }
+
+    func sendSessionCompletion(_ completion: SessionCompletion) {
+        guard let session = session, session.activationState == .activated else { return }
+
+        do {
+            let data = try JSONEncoder().encode(completion)
+            let message = ["sessionCompletion": data]
+
+            if session.isReachable {
+                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
+                    print("Error sending session completion: \(error)")
+                })
+            } else {
+                try session.updateApplicationContext(message)
+            }
+        } catch {
+            print("Error encoding session completion: \(error)")
+        }
+    }
+
+    func sendStatsUpdate(_ stats: StatsUpdate) {
+        guard let session = session, session.activationState == .activated else { return }
+
+        do {
+            let data = try JSONEncoder().encode(stats)
+            let message = ["statsUpdate": data]
+
+            if session.isReachable {
+                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
+                    print("Error sending stats update: \(error)")
+                })
+            } else {
+                try session.updateApplicationContext(message)
+            }
+        } catch {
+            print("Error encoding stats update: \(error)")
+        }
+    }
+
+    func requestStats() {
+        guard let session = session, session.activationState == .activated, session.isReachable else { return }
+
+        session.sendMessage(["requestStats": true], replyHandler: nil, errorHandler: nil)
+    }
 }
 
 extension WatchConnectivityManager: WCSessionDelegate {
@@ -155,6 +215,32 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let timerState = message["timerState"] as? [String: Any] {
             NotificationCenter.default.post(name: .timerStateReceived, object: timerState)
         }
+
+        if let sessionData = message["sessionCompletion"] as? Data {
+            do {
+                let session = try JSONDecoder().decode(SessionCompletion.self, from: sessionData)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .sessionCompletionReceived, object: session)
+                }
+            } catch {
+                print("Error decoding session completion: \(error)")
+            }
+        }
+
+        if let statsData = message["statsUpdate"] as? Data {
+            do {
+                let stats = try JSONDecoder().decode(StatsUpdate.self, from: statsData)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .statsUpdateReceived, object: stats)
+                }
+            } catch {
+                print("Error decoding stats update: \(error)")
+            }
+        }
+
+        if message["requestStats"] != nil {
+            NotificationCenter.default.post(name: .statsRequested, object: nil)
+        }
     }
 }
 
@@ -162,4 +248,7 @@ extension Notification.Name {
     static let routinesReceived = Notification.Name("routinesReceived")
     static let routinesRequested = Notification.Name("routinesRequested")
     static let timerStateReceived = Notification.Name("timerStateReceived")
+    static let sessionCompletionReceived = Notification.Name("sessionCompletionReceived")
+    static let statsUpdateReceived = Notification.Name("statsUpdateReceived")
+    static let statsRequested = Notification.Name("statsRequested")
 }

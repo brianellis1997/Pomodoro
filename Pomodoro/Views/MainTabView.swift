@@ -51,6 +51,36 @@ struct MainTabView: View {
                 timerViewModel.checkPendingWidgetActions()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionCompletionReceived)) { notification in
+            if let session = notification.object as? SessionCompletion {
+                handleWatchSessionCompletion(session)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .statsRequested)) { _ in
+            sendStatsToWatch()
+        }
+    }
+
+    private func handleWatchSessionCompletion(_ session: SessionCompletion) {
+        statsService.recordSession(
+            routineName: session.routineName,
+            durationMinutes: session.durationMinutes,
+            wasFullSession: session.wasFullSession
+        )
+        sendStatsToWatch()
+    }
+
+    private func sendStatsToWatch() {
+        guard let stats = statsService.userStats else { return }
+        let update = StatsUpdate(
+            totalSessions: stats.totalSessionsCompleted,
+            totalMinutes: stats.totalMinutesStudied,
+            currentStreak: stats.currentStreak,
+            todaySessions: statsService.todaySessions,
+            totalPoints: stats.totalPoints,
+            level: stats.level
+        )
+        WatchConnectivityManager.shared.sendStatsUpdate(update)
     }
 }
 
@@ -138,7 +168,7 @@ struct TimerTab: View {
         }
         .onChange(of: timerViewModel.phase) { oldPhase, newPhase in
             if oldPhase == .work && (newPhase == .shortBreak || newPhase == .longBreak) {
-                recordCompletedSession()
+                checkAndRecordSession()
             }
         }
         .alert("Session Complete!", isPresented: $showCompletionAlert) {
@@ -148,16 +178,31 @@ struct TimerTab: View {
         }
     }
 
-    private func recordCompletedSession() {
-        let workDuration = Int(timerViewModel.engine.workDuration / 60)
-        statsService.recordSession(
-            routineName: timerViewModel.currentRoutineName,
-            durationMinutes: workDuration,
-            wasFullSession: true
-        )
+    private func checkAndRecordSession() {
+        let workDurationSeconds = timerViewModel.engine.workDuration
+        let workDurationMinutes = Int(workDurationSeconds / 60)
 
-        earnedPoints = workDuration * 3
-        showCompletionAlert = true
+        guard let startTime = sessionStartTime else {
+            return
+        }
+
+        let elapsedTime = Date().timeIntervalSince(startTime)
+        let completionPercentage = elapsedTime / workDurationSeconds
+
+        let minimumThreshold = 0.80
+
+        if completionPercentage >= minimumThreshold {
+            statsService.recordSession(
+                routineName: timerViewModel.currentRoutineName,
+                durationMinutes: workDurationMinutes,
+                wasFullSession: completionPercentage >= 0.95
+            )
+
+            earnedPoints = workDurationMinutes * 3
+            showCompletionAlert = true
+        }
+
+        sessionStartTime = nil
     }
 }
 

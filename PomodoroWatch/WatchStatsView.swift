@@ -1,10 +1,13 @@
 import SwiftUI
 
 struct WatchStatsView: View {
+    @StateObject private var connectivityManager = WatchConnectivityManager.shared
     @State private var totalSessions = 0
     @State private var totalMinutes = 0
     @State private var currentStreak = 0
     @State private var todaySessions = 0
+    @State private var totalPoints = 0
+    @State private var level = 1
 
     var body: some View {
         ScrollView {
@@ -46,10 +49,16 @@ struct WatchStatsView: View {
         .navigationTitle("Stats")
         .onAppear {
             loadStats()
+            connectivityManager.requestStats()
         }
         .onReceive(NotificationCenter.default.publisher(for: .statsReceived)) { notification in
             if let stats = notification.object as? [String: Any] {
                 updateStats(from: stats)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .statsUpdateReceived)) { notification in
+            if let stats = notification.object as? StatsUpdate {
+                updateFromStatsUpdate(stats)
             }
         }
     }
@@ -60,6 +69,8 @@ struct WatchStatsView: View {
         totalMinutes = defaults?.integer(forKey: "stats_totalMinutes") ?? 0
         currentStreak = defaults?.integer(forKey: "stats_currentStreak") ?? 0
         todaySessions = defaults?.integer(forKey: "stats_todaySessions") ?? 0
+        totalPoints = defaults?.integer(forKey: "stats_totalPoints") ?? 0
+        level = defaults?.integer(forKey: "stats_level") ?? 1
     }
 
     private func updateStats(from stats: [String: Any]) {
@@ -75,6 +86,23 @@ struct WatchStatsView: View {
         if let today = stats["todaySessions"] as? Int {
             todaySessions = today
         }
+    }
+
+    private func updateFromStatsUpdate(_ stats: StatsUpdate) {
+        totalSessions = stats.totalSessions
+        totalMinutes = stats.totalMinutes
+        currentStreak = stats.currentStreak
+        todaySessions = stats.todaySessions
+        totalPoints = stats.totalPoints
+        level = stats.level
+
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        defaults?.set(stats.totalSessions, forKey: "stats_totalSessions")
+        defaults?.set(stats.totalMinutes, forKey: "stats_totalMinutes")
+        defaults?.set(stats.currentStreak, forKey: "stats_currentStreak")
+        defaults?.set(stats.todaySessions, forKey: "stats_todaySessions")
+        defaults?.set(stats.totalPoints, forKey: "stats_totalPoints")
+        defaults?.set(stats.level, forKey: "stats_level")
     }
 
     private func formatTime(_ minutes: Int) -> String {

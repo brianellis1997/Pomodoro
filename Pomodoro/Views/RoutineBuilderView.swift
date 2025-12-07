@@ -3,6 +3,7 @@ import SwiftData
 
 struct RoutineBuilderView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var routineSyncService: RoutineSyncService
     @Query(sort: \Routine.createdAt, order: .reverse) private var routines: [Routine]
 
     @State private var showingCreateSheet = false
@@ -28,6 +29,7 @@ struct RoutineBuilderView: View {
             RoutineEditorView(routine: nil) { newRoutine in
                 modelContext.insert(newRoutine)
                 try? modelContext.save()
+                routineSyncService.sendRoutinesToWatch()
             }
         }
         .sheet(item: $selectedRoutine) { routine in
@@ -39,6 +41,7 @@ struct RoutineBuilderView: View {
                 routine.roundsBeforeLongBreak = updatedRoutine.roundsBeforeLongBreak
                 routine.totalRounds = updatedRoutine.totalRounds
                 try? modelContext.save()
+                routineSyncService.sendRoutinesToWatch()
             }
         }
     }
@@ -80,6 +83,7 @@ struct RoutineBuilderView: View {
                     } onDelete: {
                         modelContext.delete(routine)
                         try? modelContext.save()
+                        routineSyncService.sendRoutinesToWatch()
                     }
                 }
             }
