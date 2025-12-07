@@ -18,14 +18,7 @@ class LiveActivityManager: ObservableObject {
     }
 
     func startActivity(routineName: String, state: PomodoroActivityAttributes.ContentState) {
-        let authInfo = ActivityAuthorizationInfo()
-        print("Live Activities enabled: \(authInfo.areActivitiesEnabled)")
-        print("Frequent push enabled: \(authInfo.frequentPushesEnabled)")
-
-        guard authInfo.areActivitiesEnabled else {
-            print("Live Activities are not enabled - check Settings > Pomodoro > Live Activities")
-            return
-        }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         for activity in Activity<PomodoroActivityAttributes>.activities {
             Task {
@@ -44,10 +37,9 @@ class LiveActivityManager: ObservableObject {
                 content: .init(state: state, staleDate: staleDate),
                 pushType: nil
             )
-            print("Live Activity started successfully")
             syncToWidget(state: state, routineName: routineName)
         } catch {
-            print("Failed to start Live Activity: \(error)")
+            // Live Activity failed to start
         }
     }
 
