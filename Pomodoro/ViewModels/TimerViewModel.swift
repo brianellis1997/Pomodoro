@@ -56,10 +56,35 @@ class TimerViewModel: ObservableObject {
             self?.handlePhaseComplete(completedPhase)
         }
 
+        engine.onAutoStart = { [weak self] in
+            self?.handleAutoStart()
+        }
+
         restoreTimerState()
         syncWidgetData()
         checkPendingWidgetActions()
         requestNotificationPermission()
+    }
+
+    private func handleAutoStart() {
+        saveTimerState()
+        scheduleTimerNotification()
+        syncLiveActivity()
+    }
+
+    func onAppBecameActive() {
+        engine.ensureRunning()
+        if isRunning {
+            liveActivityManager.forceStartActivity(
+                routineName: currentRoutineName,
+                timeRemaining: timeRemaining,
+                totalTime: totalTime,
+                phase: phase,
+                currentRound: currentRound,
+                totalRounds: totalRounds
+            )
+        }
+        checkPendingWidgetActions()
     }
 
     func updateSettings(autoStartBreaks: Bool, autoStartWork: Bool) {

@@ -33,6 +33,7 @@ class TimerEngine: ObservableObject {
     var autoStartBreaks: Bool = false
     var autoStartWork: Bool = false
     var onPhaseComplete: ((TimerPhase) -> Void)?
+    var onAutoStart: (() -> Void)?
 
     var progress: Double {
         guard totalTime > 0 else { return 1 }
@@ -125,8 +126,19 @@ class TimerEngine: ObservableObject {
 
         if shouldAutoStart {
             start()
+            onAutoStart?()
         } else {
             state = .idle
+        }
+    }
+
+    func ensureRunning() {
+        if state == .running && timer == nil {
+            timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    self?.tick()
+                }
+            }
         }
     }
 

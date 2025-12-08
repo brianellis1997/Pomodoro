@@ -14,7 +14,8 @@ class LiveActivityManager: ObservableObject {
     private init() {}
 
     var isActivityActive: Bool {
-        currentActivity != nil
+        guard let activity = currentActivity else { return false }
+        return activity.activityState == .active
     }
 
     func startActivity(routineName: String, state: PomodoroActivityAttributes.ContentState) {
@@ -98,6 +99,31 @@ class LiveActivityManager: ObservableObject {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
+    func forceStartActivity(
+        routineName: String,
+        timeRemaining: TimeInterval,
+        totalTime: TimeInterval,
+        phase: TimerPhase,
+        currentRound: Int,
+        totalRounds: Int
+    ) {
+        let state = PomodoroActivityAttributes.ContentState(
+            remainingTime: timeRemaining,
+            totalTime: totalTime,
+            phase: phase,
+            currentRound: currentRound,
+            totalRounds: totalRounds,
+            isRunning: true
+        )
+
+        if !isActivityActive {
+            currentActivity = nil
+            startActivity(routineName: routineName, state: state)
+        } else {
+            updateActivity(state: state)
+        }
+    }
+
     func syncTimerState(
         timeRemaining: TimeInterval,
         totalTime: TimeInterval,
@@ -116,9 +142,10 @@ class LiveActivityManager: ObservableObject {
             isRunning: isRunning
         )
 
-        if currentActivity == nil && isRunning {
+        if !isActivityActive && isRunning {
+            currentActivity = nil
             startActivity(routineName: routineName, state: state)
-        } else if currentActivity != nil {
+        } else if isActivityActive {
             if !isRunning && phase == .work && timeRemaining == totalTime {
                 endActivity()
             } else {

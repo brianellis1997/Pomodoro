@@ -48,7 +48,7 @@ struct MainTabView: View {
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active {
-                timerViewModel.checkPendingWidgetActions()
+                timerViewModel.onAppBecameActive()
             } else if newPhase == .background {
                 if !timerViewModel.isRunning {
                     LiveActivityManager.shared.endAllActivities()
