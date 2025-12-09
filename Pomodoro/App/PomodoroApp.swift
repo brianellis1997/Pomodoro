@@ -1,10 +1,15 @@
 import SwiftUI
 import SwiftData
 import WatchConnectivity
+import UserNotifications
 
 @main
 struct PomodoroApp: App {
     @StateObject private var routineSyncService = RoutineSyncService()
+
+    init() {
+        UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
+    }
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([

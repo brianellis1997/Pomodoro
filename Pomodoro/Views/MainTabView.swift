@@ -7,6 +7,7 @@ struct MainTabView: View {
     @EnvironmentObject private var routineSyncService: RoutineSyncService
     @StateObject private var timerViewModel = TimerViewModel()
     @StateObject private var statsService = StatsService()
+    @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
     @State private var selectedTab = 0
     @State private var showAchievementAlert = false
 
@@ -92,6 +93,28 @@ struct MainTabView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .statsRequested)) { _ in
             sendStatsToWatch()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .startScheduledSession)) { notification in
+            handleScheduledSessionStart(notification)
+        }
+    }
+
+    private func handleScheduledSessionStart(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let routineName = userInfo["routineName"] as? String else { return }
+
+        if let preset = RoutineConfiguration.presets.first(where: { $0.name == routineName }) {
+            timerViewModel.configure(with: preset)
+        } else if let customRoutine = customRoutines.first(where: { $0.name == routineName }) {
+            timerViewModel.configure(routine: customRoutine)
+        }
+
+        selectedTab = 0
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if !timerViewModel.isRunning {
+                timerViewModel.startPause()
+            }
         }
     }
 

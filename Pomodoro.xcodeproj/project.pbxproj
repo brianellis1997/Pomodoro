@@ -36,6 +36,7 @@
 		71F7FFAAB17F838CEAC81E4A /* PomodoroActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD4542D0C7308ECD4AFC277 /* PomodoroActivityAttributes.swift */; };
 		7204255C7A77D739B62EC73A /* TimerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C353FADFBAFFF3B678B2267E /* TimerEngine.swift */; };
 		728F9A92897CA0EBDDA28F7C /* PomodoroWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E71142AA79FE3493024E0CC4 /* PomodoroWidgetBundle.swift */; };
+		770145EB3AADCC9489665815 /* NotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD432F4C4B1CD8A922B2503F /* NotificationDelegate.swift */; };
 		7ED39B4E4D115ABAA04DED93 /* PomodoroLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B74548553857E323CE20A05 /* PomodoroLiveActivity.swift */; };
 		822F81D8AD9E6AB11CF48BA9 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */; };
 		882F33FC1D47D467A5F99B2E /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCFA3BAD7F341C63DEFD06D /* Colors.swift */; };
@@ -164,6 +165,7 @@
 		F1B23EEFFB7247980C622713 /* PomodoroApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroApp.swift; sourceTree = "<group>"; };
 		F4FADA8346945B4ACF382328 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
 		F8F6582483D53F45D221A35D /* PomodoroWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroWatchWidget.swift; sourceTree = "<group>"; };
+		FD432F4C4B1CD8A922B2503F /* NotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -270,6 +272,7 @@
 			children = (
 				F4FADA8346945B4ACF382328 /* CalendarService.swift */,
 				267073533806DE02C2434E89 /* LiveActivityManager.swift */,
+				FD432F4C4B1CD8A922B2503F /* NotificationDelegate.swift */,
 				A191EAC8F21E3B3423DDE32B /* RoutineSyncService.swift */,
 				92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */,
 				913AA668C2A03947E1DDA0B7 /* StatsService.swift */,
@@ -538,6 +541,7 @@
 				1E3C9187B09F05F4A1F42F57 /* ContentView.swift in Sources */,
 				27F2ACAFBB0935E03207D320 /* LiveActivityManager.swift in Sources */,
 				44A5A9B36579B2DD26183F26 /* MainTabView.swift in Sources */,
+				770145EB3AADCC9489665815 /* NotificationDelegate.swift in Sources */,
 				F7D6CA92FED1E5FE082FE6EF /* PomodoroActivityAttributes.swift in Sources */,
 				4950FC50FE027FAA1A43F504 /* PomodoroApp.swift in Sources */,
 				24C1AF4EB454924868E2B4AD /* Routine.swift in Sources */,
