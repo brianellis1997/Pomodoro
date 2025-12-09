@@ -408,24 +408,44 @@ struct StatsView: View {
         .cornerRadius(16)
     }
 
+    private var unlockedIds: Set<String> {
+        Set(statsService.userStats?.unlockedAchievements ?? [])
+    }
+
+    private var unlockedCount: Int {
+        Achievement.allAchievements.filter { unlockedIds.contains($0.id) }.count
+    }
+
+    private var featuredAchievements: [Achievement] {
+        let unlocked = Achievement.allAchievements.filter { unlockedIds.contains($0.id) }
+        let locked = Achievement.allAchievements.filter { !unlockedIds.contains($0.id) }
+        return Array((unlocked.suffix(4) + locked.prefix(4)).prefix(8))
+    }
+
     private var achievementsPreview: some View {
         VStack(spacing: 16) {
             HStack {
                 Text("Achievements")
                     .font(.headline)
                 Spacer()
+                Text("\(unlockedCount)/\(Achievement.allAchievements.count)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                achievementBadge(icon: "star.fill", title: "First Focus", unlocked: (statsService.userStats?.totalSessionsCompleted ?? 0) >= 1)
-                achievementBadge(icon: "bolt.fill", title: "Power Hour", unlocked: (statsService.userStats?.totalMinutesStudied ?? 0) >= 60)
-                achievementBadge(icon: "flame.fill", title: "Week Warrior", unlocked: (statsService.userStats?.currentStreak ?? 0) >= 7)
-                achievementBadge(icon: "crown.fill", title: "Century", unlocked: (statsService.userStats?.totalSessionsCompleted ?? 0) >= 100)
-                achievementBadge(icon: "moon.stars.fill", title: "Night Owl", unlocked: false)
-                achievementBadge(icon: "sunrise.fill", title: "Early Bird", unlocked: false)
-                achievementBadge(icon: "medal.fill", title: "Marathon", unlocked: (statsService.userStats?.totalMinutesStudied ?? 0) >= 600)
-                achievementBadge(icon: "sparkles", title: "Legend", unlocked: (statsService.userStats?.level ?? 0) >= 50)
+                ForEach(featuredAchievements) { achievement in
+                    achievementBadge(
+                        icon: achievement.icon,
+                        title: achievement.name,
+                        unlocked: unlockedIds.contains(achievement.id)
+                    )
+                }
             }
+
+            Text("View all in Achievements tab")
+                .font(.caption)
+                .foregroundColor(.pomodoroRed)
         }
         .padding()
         .background(Color.backgroundSecondary)
@@ -436,7 +456,7 @@ struct StatsView: View {
         VStack(spacing: 6) {
             ZStack {
                 Circle()
-                    .fill(unlocked ? Color.pomodoroOrange : Color.gray.opacity(0.3))
+                    .fill(unlocked ? Color.pomodoroRed : Color.gray.opacity(0.3))
                     .frame(width: 44, height: 44)
 
                 Image(systemName: icon)

@@ -8,40 +8,69 @@ struct MainTabView: View {
     @StateObject private var timerViewModel = TimerViewModel()
     @StateObject private var statsService = StatsService()
     @State private var selectedTab = 0
+    @State private var showAchievementAlert = false
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            TimerTab(
-                timerViewModel: timerViewModel,
-                statsService: statsService
-            )
-            .tabItem {
-                Label("Timer", systemImage: "timer")
-            }
-            .tag(0)
-
-            StatsView(statsService: statsService)
+        ZStack {
+            TabView(selection: $selectedTab) {
+                TimerTab(
+                    timerViewModel: timerViewModel,
+                    statsService: statsService
+                )
                 .tabItem {
-                    Label("Stats", systemImage: "chart.bar.fill")
+                    Label("Timer", systemImage: "timer")
                 }
-                .tag(1)
+                .tag(0)
 
-            RoutineBuilderView { routine in
-                timerViewModel.configure(routine: routine)
-                selectedTab = 0
-            }
-            .tabItem {
-                Label("Routines", systemImage: "list.bullet.rectangle")
-            }
-            .tag(2)
+                StatsView(statsService: statsService)
+                    .tabItem {
+                        Label("Stats", systemImage: "chart.bar.fill")
+                    }
+                    .tag(1)
 
-            SettingsView()
+                AchievementsView(statsService: statsService)
+                    .tabItem {
+                        Label("Achievements", systemImage: "trophy.fill")
+                    }
+                    .tag(2)
+
+                RoutineBuilderView { routine in
+                    timerViewModel.configure(routine: routine)
+                    selectedTab = 0
+                }
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
+                    Label("Routines", systemImage: "list.bullet.rectangle")
                 }
                 .tag(3)
+
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape.fill")
+                    }
+                    .tag(4)
+            }
+            .tint(.pomodoroRed)
+
+            if showAchievementAlert && !statsService.newlyUnlockedAchievements.isEmpty {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+
+                AchievementUnlockAlert(
+                    achievements: statsService.newlyUnlockedAchievements,
+                    onDismiss: {
+                        showAchievementAlert = false
+                        statsService.clearNewAchievements()
+                    }
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
         }
-        .tint(.pomodoroRed)
+        .animation(.spring(), value: showAchievementAlert)
+        .onChange(of: statsService.newlyUnlockedAchievements) { _, newValue in
+            if !newValue.isEmpty {
+                showAchievementAlert = true
+            }
+        }
         .onAppear {
             statsService.setModelContext(modelContext)
             routineSyncService.setModelContext(modelContext)
@@ -259,7 +288,8 @@ struct TimerTab: View {
                 routineName: timerViewModel.currentRoutineName,
                 durationMinutes: workDurationMinutes,
                 wasFullSession: completionPercentage >= 0.95,
-                hadFocusViolation: hadViolation
+                hadFocusViolation: hadViolation,
+                focusModeEnabled: timerViewModel.focusModeEnabled
             )
 
             if hadViolation {

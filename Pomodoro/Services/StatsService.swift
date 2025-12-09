@@ -45,6 +45,7 @@ class StatsService: ObservableObject {
     @Published var weeklyData: [DailyStats] = []
     @Published var monthlyData: [DailyStats] = []
     @Published var routineUsage: [RoutineUsage] = []
+    @Published var newlyUnlockedAchievements: [Achievement] = []
 
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
@@ -135,7 +136,7 @@ class StatsService: ObservableObject {
         }
     }
 
-    func recordSession(routineName: String, durationMinutes: Int, wasFullSession: Bool = true, hadFocusViolation: Bool = false) {
+    func recordSession(routineName: String, durationMinutes: Int, wasFullSession: Bool = true, hadFocusViolation: Bool = false, focusModeEnabled: Bool = false) {
         guard let context = modelContext else { return }
 
         let basePoints = durationMinutes * 2
@@ -143,6 +144,8 @@ class StatsService: ObservableObject {
 
         if hadFocusViolation {
             bonusMultiplier = 0.5
+        } else if focusModeEnabled {
+            bonusMultiplier = wasFullSession ? 2.5 : 2.0
         }
 
         let streakBonus = hadFocusViolation ? 0 : min((userStats?.currentStreak ?? 0) * 5, 50)
@@ -163,11 +166,54 @@ class StatsService: ObservableObject {
             stats.totalMinutesStudied += durationMinutes
             stats.lastStudyDate = Date()
             updateStreak()
+
+            if focusModeEnabled {
+                if hadFocusViolation {
+                    stats.focusModeSessionsFailed += 1
+                    stats.currentFocusStreak = 0
+                } else {
+                    stats.focusModeSessionsCompleted += 1
+                    stats.currentFocusStreak += 1
+                    if stats.currentFocusStreak > stats.longestFocusStreak {
+                        stats.longestFocusStreak = stats.currentFocusStreak
+                    }
+                }
+            }
+
             stats.level = UserStats.levelForPoints(stats.totalPoints)
+
+            let achievementPoints = checkAndUnlockAchievements(stats: stats)
+            if achievementPoints > 0 {
+                stats.totalPoints += achievementPoints
+                stats.level = UserStats.levelForPoints(stats.totalPoints)
+            }
         }
 
         try? context.save()
         loadStats()
+    }
+
+    private func checkAndUnlockAchievements(stats: UserStats) -> Int {
+        var totalBonusPoints = 0
+        var newAchievements: [Achievement] = []
+
+        for achievement in Achievement.allAchievements {
+            if !stats.unlockedAchievements.contains(achievement.id) && achievement.isUnlocked(by: stats) {
+                stats.unlockedAchievements.append(achievement.id)
+                totalBonusPoints += achievement.pointsReward
+                newAchievements.append(achievement)
+            }
+        }
+
+        if !newAchievements.isEmpty {
+            newlyUnlockedAchievements = newAchievements
+        }
+
+        return totalBonusPoints
+    }
+
+    func clearNewAchievements() {
+        newlyUnlockedAchievements = []
     }
 
     private func updateStreak() {

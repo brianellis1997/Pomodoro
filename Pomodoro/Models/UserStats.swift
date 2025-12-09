@@ -12,6 +12,21 @@ final class UserStats {
     var totalMinutesStudied: Int
     var level: Int
     var createdAt: Date
+    var focusModeSessionsCompleted: Int
+    var focusModeSessionsFailed: Int
+    var currentFocusStreak: Int
+    var longestFocusStreak: Int
+    var unlockedAchievementsData: String
+
+    var unlockedAchievements: [String] {
+        get {
+            guard !unlockedAchievementsData.isEmpty else { return [] }
+            return unlockedAchievementsData.components(separatedBy: ",")
+        }
+        set {
+            unlockedAchievementsData = newValue.joined(separator: ",")
+        }
+    }
 
     init(
         id: UUID = UUID(),
@@ -22,7 +37,12 @@ final class UserStats {
         totalSessionsCompleted: Int = 0,
         totalMinutesStudied: Int = 0,
         level: Int = 1,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        focusModeSessionsCompleted: Int = 0,
+        focusModeSessionsFailed: Int = 0,
+        currentFocusStreak: Int = 0,
+        longestFocusStreak: Int = 0,
+        unlockedAchievements: [String] = []
     ) {
         self.id = id
         self.totalPoints = totalPoints
@@ -33,6 +53,11 @@ final class UserStats {
         self.totalMinutesStudied = totalMinutesStudied
         self.level = level
         self.createdAt = createdAt
+        self.focusModeSessionsCompleted = focusModeSessionsCompleted
+        self.focusModeSessionsFailed = focusModeSessionsFailed
+        self.currentFocusStreak = currentFocusStreak
+        self.longestFocusStreak = longestFocusStreak
+        self.unlockedAchievementsData = unlockedAchievements.joined(separator: ",")
     }
 
     static func pointsRequiredForLevel(_ level: Int) -> Int {
