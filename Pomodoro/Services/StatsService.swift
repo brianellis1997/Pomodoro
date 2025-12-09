@@ -135,19 +135,24 @@ class StatsService: ObservableObject {
         }
     }
 
-    func recordSession(routineName: String, durationMinutes: Int, wasFullSession: Bool = true) {
+    func recordSession(routineName: String, durationMinutes: Int, wasFullSession: Bool = true, hadFocusViolation: Bool = false) {
         guard let context = modelContext else { return }
 
         let basePoints = durationMinutes * 2
-        let bonusMultiplier = wasFullSession ? 1.5 : 1.0
-        let streakBonus = min((userStats?.currentStreak ?? 0) * 5, 50)
+        var bonusMultiplier = wasFullSession ? 1.5 : 1.0
+
+        if hadFocusViolation {
+            bonusMultiplier = 0.5
+        }
+
+        let streakBonus = hadFocusViolation ? 0 : min((userStats?.currentStreak ?? 0) * 5, 50)
         let pointsEarned = Int(Double(basePoints) * bonusMultiplier) + streakBonus
 
         let session = StudySession(
             routineName: routineName,
             durationMinutes: durationMinutes,
             pointsEarned: pointsEarned,
-            wasFullSession: wasFullSession
+            wasFullSession: wasFullSession && !hadFocusViolation
         )
 
         context.insert(session)
@@ -157,12 +162,8 @@ class StatsService: ObservableObject {
             stats.totalSessionsCompleted += 1
             stats.totalMinutesStudied += durationMinutes
             stats.lastStudyDate = Date()
-
             updateStreak()
-
-            while stats.totalPoints >= stats.level * 500 {
-                stats.level += 1
-            }
+            stats.level = UserStats.levelForPoints(stats.totalPoints)
         }
 
         try? context.save()

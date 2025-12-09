@@ -35,17 +35,53 @@ final class UserStats {
         self.createdAt = createdAt
     }
 
+    static func pointsRequiredForLevel(_ level: Int) -> Int {
+        if level <= 1 { return 0 }
+
+        var total = 0
+        for lvl in 1..<level {
+            total += pointsForSingleLevel(lvl)
+        }
+        return total
+    }
+
+    static func pointsForSingleLevel(_ level: Int) -> Int {
+        switch level {
+        case 1...10:
+            return 500
+        case 11...25:
+            return 1_000
+        case 26...50:
+            return 2_500
+        case 51...75:
+            return 5_000
+        case 76...100:
+            return 10_000
+        default:
+            return 25_000
+        }
+    }
+
     var pointsToNextLevel: Int {
-        let nextLevelThreshold = level * 500
+        let nextLevelThreshold = UserStats.pointsRequiredForLevel(level + 1)
         return max(0, nextLevelThreshold - totalPoints)
     }
 
     var levelProgress: Double {
-        let previousLevelThreshold = (level - 1) * 500
-        let nextLevelThreshold = level * 500
-        let pointsInCurrentLevel = totalPoints - previousLevelThreshold
-        let pointsNeededForLevel = nextLevelThreshold - previousLevelThreshold
+        let currentLevelThreshold = UserStats.pointsRequiredForLevel(level)
+        let nextLevelThreshold = UserStats.pointsRequiredForLevel(level + 1)
+        let pointsInCurrentLevel = totalPoints - currentLevelThreshold
+        let pointsNeededForLevel = nextLevelThreshold - currentLevelThreshold
+        guard pointsNeededForLevel > 0 else { return 1.0 }
         return Double(pointsInCurrentLevel) / Double(pointsNeededForLevel)
+    }
+
+    static func levelForPoints(_ points: Int) -> Int {
+        var level = 1
+        while pointsRequiredForLevel(level + 1) <= points {
+            level += 1
+        }
+        return level
     }
 
     var rankTitle: String {
@@ -54,16 +90,28 @@ final class UserStats {
             return "Novice"
         case 6...10:
             return "Apprentice"
-        case 11...20:
+        case 11...15:
+            return "Student"
+        case 16...20:
             return "Scholar"
-        case 21...35:
+        case 21...25:
+            return "Adept"
+        case 26...30:
             return "Expert"
-        case 36...50:
+        case 31...40:
+            return "Veteran"
+        case 41...50:
             return "Master"
-        case 51...75:
+        case 51...60:
             return "Grandmaster"
-        default:
+        case 61...75:
+            return "Sage"
+        case 76...90:
             return "Legend"
+        case 91...100:
+            return "Mythic"
+        default:
+            return "Transcendent"
         }
     }
 }

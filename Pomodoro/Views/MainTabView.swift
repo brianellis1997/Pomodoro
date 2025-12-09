@@ -252,18 +252,25 @@ struct TimerTab: View {
         let completionPercentage = elapsedTime / workDurationSeconds
 
         let minimumThreshold = 0.80
+        let hadViolation = timerViewModel.sessionFailed
 
         if completionPercentage >= minimumThreshold {
             statsService.recordSession(
                 routineName: timerViewModel.currentRoutineName,
                 durationMinutes: workDurationMinutes,
-                wasFullSession: completionPercentage >= 0.95
+                wasFullSession: completionPercentage >= 0.95,
+                hadFocusViolation: hadViolation
             )
 
-            earnedPoints = workDurationMinutes * 3
+            if hadViolation {
+                earnedPoints = workDurationMinutes
+            } else {
+                earnedPoints = workDurationMinutes * 3
+            }
             showCompletionAlert = true
         }
 
+        timerViewModel.resetFocusModeViolation()
         sessionStartTime = nil
     }
 }
