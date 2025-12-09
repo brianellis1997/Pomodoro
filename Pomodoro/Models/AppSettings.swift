@@ -21,6 +21,8 @@ final class AppSettings {
     var appleMusicEnabled: Bool
     var studyPlaylistId: String?
     var breakPlaylistId: String?
+    var spotifyStudyPlaylistUri: String?
+    var spotifyBreakPlaylistUri: String?
 
     init(
         id: UUID = UUID(),
@@ -36,7 +38,9 @@ final class AppSettings {
         spotifyEnabled: Bool = false,
         appleMusicEnabled: Bool = false,
         studyPlaylistId: String? = nil,
-        breakPlaylistId: String? = nil
+        breakPlaylistId: String? = nil,
+        spotifyStudyPlaylistUri: String? = nil,
+        spotifyBreakPlaylistUri: String? = nil
     ) {
         self.id = id
         self.workEndSound = workEndSound
@@ -52,6 +56,8 @@ final class AppSettings {
         self.appleMusicEnabled = appleMusicEnabled
         self.studyPlaylistId = studyPlaylistId
         self.breakPlaylistId = breakPlaylistId
+        self.spotifyStudyPlaylistUri = spotifyStudyPlaylistUri
+        self.spotifyBreakPlaylistUri = spotifyBreakPlaylistUri
     }
 
     static let availableSounds: [String] = [

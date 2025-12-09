@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import EventKit
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -179,14 +180,56 @@ struct SettingsView: View {
             ))
 
             if settings.spotifyEnabled {
-                Text("Spotify integration requires the Spotify app")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                NavigationLink {
+                    SpotifyPlaylistInputView(
+                        title: "Study Playlist",
+                        playlistUri: Binding(
+                            get: { settings.spotifyStudyPlaylistUri },
+                            set: { newValue in
+                                settings.spotifyStudyPlaylistUri = newValue
+                                try? modelContext.save()
+                            }
+                        )
+                    )
+                } label: {
+                    HStack {
+                        Text("Study Playlist")
+                        Spacer()
+                        Text(settings.spotifyStudyPlaylistUri != nil ? "Set" : "None")
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                NavigationLink {
+                    SpotifyPlaylistInputView(
+                        title: "Break Playlist",
+                        playlistUri: Binding(
+                            get: { settings.spotifyBreakPlaylistUri },
+                            set: { newValue in
+                                settings.spotifyBreakPlaylistUri = newValue
+                                try? modelContext.save()
+                            }
+                        )
+                    )
+                } label: {
+                    HStack {
+                        Text("Break Playlist")
+                        Spacer()
+                        Text(settings.spotifyBreakPlaylistUri != nil ? "Set" : "None")
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                if !SpotifyService.shared.isSpotifyInstalled {
+                    Text("Spotify app not installed")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
             }
         } header: {
             Label("Music", systemImage: "music.note")
         } footer: {
-            Text("Play music automatically during study or break sessions")
+            Text("Save your playlists here for quick access. Open them manually before starting your session.")
         }
     }
 
@@ -261,7 +304,15 @@ struct SettingsView: View {
     }
 
     private func requestCalendarPermission() {
-        // TODO: Implement EventKit authorization
+        Task {
+            let granted = await CalendarService.shared.requestAccess()
+            if !granted {
+                await MainActor.run {
+                    settings.calendarIntegrationEnabled = false
+                    try? modelContext.save()
+                }
+            }
+        }
     }
 }
 
@@ -286,12 +337,12 @@ struct PlaylistPickerView: View {
 }
 
 struct ScheduledSessionsView: View {
-    @State private var scheduledSessions: [ScheduledSession] = []
+    @StateObject private var calendarService = CalendarService.shared
     @State private var showingAddSheet = false
 
     var body: some View {
         List {
-            if scheduledSessions.isEmpty {
+            if calendarService.scheduledSessions.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "calendar.badge.plus")
                         .font(.largeTitle)
@@ -305,19 +356,34 @@ struct ScheduledSessionsView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
-            }
-
-            ForEach(scheduledSessions) { session in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(session.routineName)
-                        .fontWeight(.medium)
-                    Text(session.scheduledDate, style: .date)
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(calendarService.scheduledSessions) { session in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(session.routineName)
+                            .fontWeight(.medium)
+                        HStack {
+                            Text(session.scheduledDate, style: .date)
+                            Text("at")
+                            Text(session.scheduledDate, style: .time)
+                        }
                         .font(.caption)
                         .foregroundColor(.secondary)
+
+                        if session.repeatPattern != .none {
+                            Text("Repeats: \(session.repeatPattern.rawValue)")
+                                .font(.caption2)
+                                .foregroundColor(.pomodoroBlue)
+                        }
+                    }
+                    .padding(.vertical, 4)
                 }
-            }
-            .onDelete { indexSet in
-                scheduledSessions.remove(atOffsets: indexSet)
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        let session = calendarService.scheduledSessions[index]
+                        calendarService.deleteSession(session)
+                    }
+                }
             }
         }
         .navigationTitle("Scheduled Sessions")
@@ -329,60 +395,58 @@ struct ScheduledSessionsView: View {
             }
         }
         .sheet(isPresented: $showingAddSheet) {
-            AddScheduledSessionView { session in
-                scheduledSessions.append(session)
-            }
+            AddScheduledSessionView()
         }
-    }
-}
-
-struct ScheduledSession: Identifiable {
-    let id = UUID()
-    let routineName: String
-    let scheduledDate: Date
-    let repeatPattern: RepeatPattern
-
-    enum RepeatPattern: String, CaseIterable {
-        case none = "Never"
-        case daily = "Daily"
-        case weekdays = "Weekdays"
-        case weekly = "Weekly"
+        .onAppear {
+            calendarService.fetchUpcomingSessions()
+        }
     }
 }
 
 struct AddScheduledSessionView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
-    @State private var routineName = "Classic Pomodoro"
-    @State private var date = Date()
-    @State private var repeatPattern: ScheduledSession.RepeatPattern = .none
-
-    let onSave: (ScheduledSession) -> Void
+    @State private var selectedRoutine: RoutineConfiguration = .classic
+    @State private var date = Date().addingTimeInterval(3600)
+    @State private var repeatPattern: RepeatPattern = .none
+    @State private var isCreating = false
+    @State private var showError = false
 
     var body: some View {
         NavigationView {
             Form {
-                Picker("Routine", selection: $routineName) {
-                    Section("Presets") {
+                Section("Routine") {
+                    Picker("Select Routine", selection: $selectedRoutine) {
                         ForEach(RoutineConfiguration.presets, id: \.name) { preset in
-                            Text(preset.name).tag(preset.name)
+                            Text(preset.name).tag(preset)
+                        }
+                        ForEach(customRoutines) { routine in
+                            Text(routine.name).tag(routine.configuration)
                         }
                     }
-                    if !customRoutines.isEmpty {
-                        Section("Your Routines") {
-                            ForEach(customRoutines) { routine in
-                                Text(routine.name).tag(routine.name)
-                            }
-                        }
+                    .pickerStyle(.menu)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Duration: ~\(selectedRoutine.totalDurationMinutes) minutes")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(selectedRoutine.totalRounds) rounds of \(selectedRoutine.workDuration)min work")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
 
-                DatePicker("Date & Time", selection: $date)
+                Section("Schedule") {
+                    DatePicker("Date & Time", selection: $date, in: Date()...)
+                }
 
-                Picker("Repeat", selection: $repeatPattern) {
-                    ForEach(ScheduledSession.RepeatPattern.allCases, id: \.self) { pattern in
-                        Text(pattern.rawValue).tag(pattern)
+                Section("Repeat") {
+                    Picker("Frequency", selection: $repeatPattern) {
+                        ForEach(RepeatPattern.allCases, id: \.self) { pattern in
+                            Text(pattern.rawValue).tag(pattern)
+                        }
                     }
+                    .pickerStyle(.menu)
                 }
             }
             .navigationTitle("Schedule Session")
@@ -393,16 +457,102 @@ struct AddScheduledSessionView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
-                        let session = ScheduledSession(
-                            routineName: routineName,
-                            scheduledDate: date,
-                            repeatPattern: repeatPattern
-                        )
-                        onSave(session)
-                        dismiss()
+                        createSession()
                     }
+                    .disabled(isCreating)
                 }
             }
+            .alert("Failed to Create Event", isPresented: $showError) {
+                Button("OK") {}
+            } message: {
+                Text("Could not add the session to your calendar. Please check your calendar permissions.")
+            }
+        }
+    }
+
+    private func createSession() {
+        isCreating = true
+        Task {
+            let success = await CalendarService.shared.createSession(
+                routineName: selectedRoutine.name,
+                routineConfig: selectedRoutine,
+                date: date,
+                repeatPattern: repeatPattern
+            )
+
+            await MainActor.run {
+                isCreating = false
+                if success {
+                    dismiss()
+                } else {
+                    showError = true
+                }
+            }
+        }
+    }
+}
+
+struct SpotifyPlaylistInputView: View {
+    @Environment(\.dismiss) private var dismiss
+    let title: String
+    @Binding var playlistUri: String?
+    @State private var inputText: String = ""
+    @State private var showingHelp = false
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Playlist link or URI", text: $inputText)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+
+                if !inputText.isEmpty {
+                    Button("Test in Spotify") {
+                        SpotifyService.shared.openPlaylist(inputText)
+                    }
+                }
+            } header: {
+                Text("Spotify Playlist")
+            } footer: {
+                Text("Paste a Spotify playlist link or URI")
+            }
+
+            Section {
+                Button {
+                    showingHelp = true
+                } label: {
+                    Label("How to get a playlist link", systemImage: "questionmark.circle")
+                }
+            }
+
+            Section {
+                Button("Save") {
+                    playlistUri = inputText.isEmpty ? nil : inputText
+                    dismiss()
+                }
+                .frame(maxWidth: .infinity)
+                .foregroundColor(.pomodoroRed)
+
+                if playlistUri != nil {
+                    Button("Remove Playlist") {
+                        playlistUri = nil
+                        inputText = ""
+                        dismiss()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.red)
+                }
+            }
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            inputText = playlistUri ?? ""
+        }
+        .alert("How to get a Spotify playlist link", isPresented: $showingHelp) {
+            Button("OK") {}
+        } message: {
+            Text("1. Open Spotify\n2. Go to a playlist\n3. Tap ••• (more)\n4. Tap 'Share'\n5. Tap 'Copy link'\n6. Paste it here")
         }
     }
 }

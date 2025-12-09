@@ -50,6 +50,7 @@ struct MainTabView: View {
             if newPhase == .active {
                 timerViewModel.onAppBecameActive()
             } else if newPhase == .background {
+                timerViewModel.onAppWentToBackground()
                 if !timerViewModel.isRunning {
                     LiveActivityManager.shared.endAllActivities()
                 }
@@ -107,6 +108,26 @@ struct TimerTab: View {
             TimerView(viewModel: timerViewModel)
 
             VStack {
+                if timerViewModel.sessionFailed && timerViewModel.focusModeEnabled {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                        Text("Focus Mode Violation!")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                        Button("Dismiss") {
+                            timerViewModel.resetFocusModeViolation()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.pomodoroRed)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.yellow.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.top, 8)
+                }
+
                 HStack {
                     Menu {
                         Section("Presets") {
@@ -194,12 +215,28 @@ struct TimerTab: View {
         .onChange(of: settings?.autoStartWork) { _, _ in
             syncSettings()
         }
+        .onChange(of: settings?.focusModeEnabled) { _, _ in
+            syncSettings()
+        }
+        .onChange(of: settings?.spotifyEnabled) { _, _ in
+            syncSettings()
+        }
+        .onChange(of: settings?.spotifyStudyPlaylistUri) { _, _ in
+            syncSettings()
+        }
+        .onChange(of: settings?.spotifyBreakPlaylistUri) { _, _ in
+            syncSettings()
+        }
     }
 
     private func syncSettings() {
         timerViewModel.updateSettings(
             autoStartBreaks: settings?.autoStartBreaks ?? false,
-            autoStartWork: settings?.autoStartWork ?? false
+            autoStartWork: settings?.autoStartWork ?? false,
+            focusModeEnabled: settings?.focusModeEnabled ?? false,
+            spotifyEnabled: settings?.spotifyEnabled ?? false,
+            spotifyStudyPlaylistUri: settings?.spotifyStudyPlaylistUri,
+            spotifyBreakPlaylistUri: settings?.spotifyBreakPlaylistUri
         )
     }
 

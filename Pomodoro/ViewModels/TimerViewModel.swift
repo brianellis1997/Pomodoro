@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 import Combine
 import WidgetKit
 import UserNotifications
@@ -8,6 +9,15 @@ import UserNotifications
 class TimerViewModel: ObservableObject {
     @Published var engine = TimerEngine()
     @Published var currentRoutineName: String = "Classic Pomodoro"
+    @Published var focusModeEnabled: Bool = false
+    @Published var sessionFailed: Bool = false
+    @Published var focusModeViolationCount: Int = 0
+
+    var spotifyEnabled: Bool = false
+    var spotifyStudyPlaylistUri: String?
+    var spotifyBreakPlaylistUri: String?
+
+    private var focusModeGraceUntil: Date?
 
     private let liveActivityManager = LiveActivityManager.shared
     private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
@@ -70,6 +80,7 @@ class TimerViewModel: ObservableObject {
         saveTimerState()
         scheduleTimerNotification()
         syncLiveActivity()
+        triggerSpotifyPlayback()
     }
 
     func onAppBecameActive() {
@@ -87,9 +98,67 @@ class TimerViewModel: ObservableObject {
         checkPendingWidgetActions()
     }
 
-    func updateSettings(autoStartBreaks: Bool, autoStartWork: Bool) {
+    func updateSettings(
+        autoStartBreaks: Bool,
+        autoStartWork: Bool,
+        focusModeEnabled: Bool,
+        spotifyEnabled: Bool = false,
+        spotifyStudyPlaylistUri: String? = nil,
+        spotifyBreakPlaylistUri: String? = nil
+    ) {
         engine.autoStartBreaks = autoStartBreaks
         engine.autoStartWork = autoStartWork
+        self.focusModeEnabled = focusModeEnabled
+        self.spotifyEnabled = spotifyEnabled
+        self.spotifyStudyPlaylistUri = spotifyStudyPlaylistUri
+        self.spotifyBreakPlaylistUri = spotifyBreakPlaylistUri
+    }
+
+    func onAppWentToBackground() {
+        guard focusModeEnabled && isRunning && phase == .work else { return }
+
+        if let graceUntil = focusModeGraceUntil, Date() < graceUntil {
+            return
+        }
+
+        let brightnessAtBackground = UIScreen.main.brightness
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+
+            let currentBrightness = UIScreen.main.brightness
+            let screenLikelyOff = currentBrightness < 0.01 || brightnessAtBackground < 0.01
+
+            if !screenLikelyOff {
+                self.focusModeViolationCount += 1
+                self.sessionFailed = true
+                self.sendFocusModeViolationNotification()
+            }
+        }
+    }
+
+    func setFocusModeGrace(seconds: TimeInterval) {
+        focusModeGraceUntil = Date().addingTimeInterval(seconds)
+    }
+
+    func resetFocusModeViolation() {
+        sessionFailed = false
+    }
+
+    private func sendFocusModeViolationNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Focus Mode Violation!"
+        content.body = "You left the app during your focus session. Stay focused to complete your session!"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "focusModeViolation-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request)
     }
 
     private func handlePhaseComplete(_ phase: TimerPhase) {
@@ -226,9 +295,26 @@ class TimerViewModel: ObservableObject {
         } else {
             engine.start()
             scheduleTimerNotification()
+            triggerSpotifyPlayback()
         }
         saveTimerState()
         syncLiveActivity()
+    }
+
+    private func triggerSpotifyPlayback() {
+        guard spotifyEnabled else { return }
+
+        let playlistUri: String?
+        if phase == .work {
+            playlistUri = spotifyStudyPlaylistUri
+        } else {
+            playlistUri = spotifyBreakPlaylistUri
+        }
+
+        guard let uri = playlistUri else { return }
+
+        setFocusModeGrace(seconds: 3)
+        SpotifyService.shared.openPlaylist(uri)
     }
 
     func reset() {

@@ -28,6 +28,8 @@
 		4B49298E2F9FCAD2F3E1F30B /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */; };
 		4BB15B86A83E005E471D3648 /* TimerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C353FADFBAFFF3B678B2267E /* TimerEngine.swift */; };
 		4E8939235A35A280A7559A03 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37381671A153838D503EE9C5 /* StatsView.swift */; };
+		545E57551197E788FF227253 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FADA8346945B4ACF382328 /* CalendarService.swift */; };
+		595FA4890D51A1F098025580 /* SpotifyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */; };
 		59F76570A6D7ED343C10FA50 /* WatchStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC93B2BD5546E302DA8727FB /* WatchStatsView.swift */; };
 		5B0BC27E8B90DD24F8D816BF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9747E5F5B2F719CC6E09CD0 /* Assets.xcassets */; };
 		67CDFB22605A213849C9352D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1725AF3859766A66A381AFF9 /* Assets.xcassets */; };
@@ -132,6 +134,7 @@
 		7B74548553857E323CE20A05 /* PomodoroLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroLiveActivity.swift; sourceTree = "<group>"; };
 		8F3F41736F30C2F2A940E988 /* Routine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routine.swift; sourceTree = "<group>"; };
 		913AA668C2A03947E1DDA0B7 /* StatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsService.swift; sourceTree = "<group>"; };
+		92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
 		9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9B7BDE78E5E0C085557053EC /* TimerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlsView.swift; sourceTree = "<group>"; };
 		A191EAC8F21E3B3423DDE32B /* RoutineSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineSyncService.swift; sourceTree = "<group>"; };
@@ -155,6 +158,7 @@
 		E3D5FF2B8E5E0229482835B3 /* PomodoroWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PomodoroWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E71142AA79FE3493024E0CC4 /* PomodoroWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroWidgetBundle.swift; sourceTree = "<group>"; };
 		F1B23EEFFB7247980C622713 /* PomodoroApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroApp.swift; sourceTree = "<group>"; };
+		F4FADA8346945B4ACF382328 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
 		F8F6582483D53F45D221A35D /* PomodoroWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroWatchWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -259,8 +263,10 @@
 		4D617166703784930FA7519A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F4FADA8346945B4ACF382328 /* CalendarService.swift */,
 				267073533806DE02C2434E89 /* LiveActivityManager.swift */,
 				A191EAC8F21E3B3423DDE32B /* RoutineSyncService.swift */,
+				92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */,
 				913AA668C2A03947E1DDA0B7 /* StatsService.swift */,
 			);
 			path = Services;
@@ -518,6 +524,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D1A0C9EF55913345091D2485 /* AppSettings.swift in Sources */,
+				545E57551197E788FF227253 /* CalendarService.swift in Sources */,
 				43521A6801AFE685F883C07F /* CircularProgressView.swift in Sources */,
 				98475FD046433FB860383FEB /* Colors.swift in Sources */,
 				1E3C9187B09F05F4A1F42F57 /* ContentView.swift in Sources */,
@@ -530,6 +537,7 @@
 				CFEF0D0224CF65EC3FCFAB71 /* RoutineConfiguration.swift in Sources */,
 				46935FAABAB86C1F692C4D7F /* RoutineSyncService.swift in Sources */,
 				49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */,
+				595FA4890D51A1F098025580 /* SpotifyService.swift in Sources */,
 				AB69F235315336AB18D62694 /* StatsService.swift in Sources */,
 				4E8939235A35A280A7559A03 /* StatsView.swift in Sources */,
 				88644C4522C8F6258008F966 /* StudySession.swift in Sources */,

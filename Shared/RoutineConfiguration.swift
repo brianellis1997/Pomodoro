@@ -1,6 +1,6 @@
 import Foundation
 
-struct RoutineConfiguration: Codable, Equatable {
+struct RoutineConfiguration: Codable, Equatable, Hashable {
     var name: String
     var workDuration: Int
     var shortBreakDuration: Int
@@ -25,6 +25,7 @@ struct RoutineConfiguration: Codable, Equatable {
     }
 
     static let classicPomodoro = RoutineConfiguration()
+    static let classic = classicPomodoro
 
     static let deepWork = RoutineConfiguration(
         name: "Deep Work",

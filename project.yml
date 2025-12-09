@@ -37,6 +37,10 @@ targets:
         CFBundleVersion: "1"
         UILaunchScreen: {}
         NSSupportsLiveActivities: true
+        NSCalendarsFullAccessUsageDescription: "Pomodoro needs calendar access to schedule study sessions and remind you when they're about to start."
+        NSCalendarsUsageDescription: "Pomodoro needs calendar access to schedule study sessions and remind you when they're about to start."
+        LSApplicationQueriesSchemes:
+          - spotify
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
