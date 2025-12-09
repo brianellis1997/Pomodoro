@@ -12,12 +12,16 @@ class TimerViewModel: ObservableObject {
     @Published var focusModeEnabled: Bool = false
     @Published var sessionFailed: Bool = false
     @Published var focusModeViolationCount: Int = 0
+    @Published var showCloseCallMessage: Bool = false
+
+    static let focusGracePeriod: TimeInterval = 5.0
 
     var spotifyEnabled: Bool = false
     var spotifyStudyPlaylistUri: String?
     var spotifyBreakPlaylistUri: String?
 
     private var focusModeGraceUntil: Date?
+    private var backgroundStartTime: Date?
 
     private let liveActivityManager = LiveActivityManager.shared
     private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
@@ -96,6 +100,27 @@ class TimerViewModel: ObservableObject {
             )
         }
         checkPendingWidgetActions()
+        handleFocusModeReturn()
+    }
+
+    private func handleFocusModeReturn() {
+        guard let startTime = backgroundStartTime else { return }
+        backgroundStartTime = nil
+
+        let timeAway = Date().timeIntervalSince(startTime)
+
+        if timeAway < Self.focusGracePeriod {
+            cancelScheduledViolationNotification()
+
+            if !sessionFailed {
+                showCloseCallMessage = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                    self?.showCloseCallMessage = false
+                }
+            }
+        } else {
+            triggerFocusViolation()
+        }
     }
 
     func updateSettings(
@@ -123,18 +148,65 @@ class TimerViewModel: ObservableObject {
 
         let brightnessAtBackground = UIScreen.main.brightness
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self = self else { return }
 
             let currentBrightness = UIScreen.main.brightness
             let screenLikelyOff = currentBrightness < 0.01 || brightnessAtBackground < 0.01
 
-            if !screenLikelyOff {
-                self.focusModeViolationCount += 1
-                self.sessionFailed = true
-                self.sendFocusModeViolationNotification()
+            if screenLikelyOff {
+                return
             }
+
+            self.backgroundStartTime = Date()
+            self.sendGracePeriodWarningNotification()
+            self.scheduleViolationNotification()
         }
+    }
+
+    private func sendGracePeriodWarningNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Come Back!"
+        content.body = "Return to the app within \(Int(Self.focusGracePeriod)) seconds to avoid a focus mode violation!"
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+
+        let request = UNNotificationRequest(
+            identifier: "focusGraceWarning",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func scheduleViolationNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Focus Mode Violation!"
+        content.body = "Time's up! Your points will be reduced to 50% and you won't receive streak bonus."
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.focusGracePeriod, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "focusGraceViolation",
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func cancelScheduledViolationNotification() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["focusGraceViolation"])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ["focusGraceWarning"])
+    }
+
+    private func triggerFocusViolation() {
+        guard !sessionFailed else { return }
+        focusModeViolationCount += 1
+        sessionFailed = true
+        backgroundStartTime = nil
     }
 
     func setFocusModeGrace(seconds: TimeInterval) {
@@ -143,22 +215,6 @@ class TimerViewModel: ObservableObject {
 
     func resetFocusModeViolation() {
         sessionFailed = false
-    }
-
-    private func sendFocusModeViolationNotification() {
-        let content = UNMutableNotificationContent()
-        content.title = "Focus Mode Violation!"
-        content.body = "You left the app during your focus session. Stay focused to complete your session!"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
-        let request = UNNotificationRequest(
-            identifier: "focusModeViolation-\(UUID().uuidString)",
-            content: content,
-            trigger: trigger
-        )
-
-        UNUserNotificationCenter.current().add(request)
     }
 
     private func handlePhaseComplete(_ phase: TimerPhase) {

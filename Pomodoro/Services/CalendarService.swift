@@ -100,6 +100,54 @@ class CalendarService: ObservableObject {
         cancelNotification(for: session)
     }
 
+    func updateSession(
+        _ session: ScheduledPomodoroSession,
+        routineName: String,
+        routineConfig: RoutineConfiguration,
+        date: Date,
+        repeatPattern: RepeatPattern
+    ) async -> Bool {
+        if let eventIdentifier = session.eventIdentifier,
+           let event = eventStore.event(withIdentifier: eventIdentifier) {
+            event.title = "Pomodoro: \(routineName)"
+            event.startDate = date
+            event.endDate = date.addingTimeInterval(TimeInterval(routineConfig.totalDurationMinutes * 60))
+            event.notes = "Routine: \(routineName)\nWork: \(routineConfig.workDuration)min\nBreak: \(routineConfig.shortBreakDuration)min\nRounds: \(routineConfig.totalRounds)"
+
+            event.recurrenceRules?.removeAll()
+            if repeatPattern != .none {
+                let rule = createRecurrenceRule(for: repeatPattern)
+                event.recurrenceRules = [rule]
+            }
+
+            do {
+                try eventStore.save(event, span: .thisEvent)
+            } catch {
+                return false
+            }
+        }
+
+        cancelNotification(for: session)
+
+        let updatedSession = ScheduledPomodoroSession(
+            id: session.id,
+            eventIdentifier: session.eventIdentifier,
+            routineName: routineName,
+            routineConfig: routineConfig,
+            scheduledDate: date,
+            repeatPattern: repeatPattern
+        )
+
+        if let index = scheduledSessions.firstIndex(where: { $0.id == session.id }) {
+            scheduledSessions[index] = updatedSession
+        }
+
+        saveSessions()
+        scheduleNotification(for: updatedSession)
+
+        return true
+    }
+
     func fetchUpcomingSessions() {
         guard isAuthorized else { return }
 

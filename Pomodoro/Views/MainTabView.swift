@@ -161,23 +161,45 @@ struct TimerTab: View {
 
             VStack {
                 if timerViewModel.sessionFailed && timerViewModel.focusModeEnabled {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.yellow)
-                        Text("Focus Mode Violation!")
-                            .font(.caption)
-                            .fontWeight(.semibold)
+                    VStack(spacing: 4) {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.yellow)
+                            Text("Focus Mode Violation!")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                        }
+                        Text("Points reduced to 50% • No streak bonus")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                         Button("Dismiss") {
                             timerViewModel.resetFocusModeViolation()
                         }
                         .font(.caption)
                         .foregroundColor(.pomodoroRed)
+                        .padding(.top, 2)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(Color.yellow.opacity(0.2))
                     .cornerRadius(8)
                     .padding(.top, 8)
+                }
+
+                if timerViewModel.showCloseCallMessage {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Close call! You made it back in time.")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.green.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.top, 8)
+                    .transition(.scale.combined(with: .opacity))
                 }
 
                 HStack {
@@ -243,6 +265,8 @@ struct TimerTab: View {
                 Spacer()
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: timerViewModel.showCloseCallMessage)
+        .animation(.easeInOut(duration: 0.3), value: timerViewModel.sessionFailed)
         .onChange(of: timerViewModel.state) { oldState, newState in
             if oldState == .idle && newState == .running {
                 sessionStartTime = Date()

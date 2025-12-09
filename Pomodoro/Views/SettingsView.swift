@@ -339,6 +339,7 @@ struct PlaylistPickerView: View {
 struct ScheduledSessionsView: View {
     @StateObject private var calendarService = CalendarService.shared
     @State private var showingAddSheet = false
+    @State private var sessionToEdit: ScheduledPomodoroSession?
 
     var body: some View {
         List {
@@ -359,24 +360,29 @@ struct ScheduledSessionsView: View {
                 .listRowBackground(Color.clear)
             } else {
                 ForEach(calendarService.scheduledSessions) { session in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(session.routineName)
-                            .fontWeight(.medium)
-                        HStack {
-                            Text(session.scheduledDate, style: .date)
-                            Text("at")
-                            Text(session.scheduledDate, style: .time)
-                        }
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Button {
+                        sessionToEdit = session
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(session.routineName)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                            HStack {
+                                Text(session.scheduledDate, style: .date)
+                                Text("at")
+                                Text(session.scheduledDate, style: .time)
+                            }
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
-                        if session.repeatPattern != .none {
-                            Text("Repeats: \(session.repeatPattern.rawValue)")
-                                .font(.caption2)
-                                .foregroundColor(.pomodoroBlue)
+                            if session.repeatPattern != .none {
+                                Text("Repeats: \(session.repeatPattern.rawValue)")
+                                    .font(.caption2)
+                                    .foregroundColor(.pomodoroBlue)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
                 .onDelete { indexSet in
                     for index in indexSet {
@@ -388,14 +394,22 @@ struct ScheduledSessionsView: View {
         }
         .navigationTitle("Scheduled Sessions")
         .toolbar {
-            Button {
-                showingAddSheet = true
-            } label: {
-                Image(systemName: "plus")
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showingAddSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+            ToolbarItem(placement: .navigationBarLeading) {
+                EditButton()
             }
         }
         .sheet(isPresented: $showingAddSheet) {
             AddScheduledSessionView()
+        }
+        .sheet(item: $sessionToEdit) { session in
+            EditScheduledSessionView(session: session)
         }
         .onAppear {
             calendarService.fetchUpcomingSessions()
@@ -482,6 +496,126 @@ struct AddScheduledSessionView: View {
 
             await MainActor.run {
                 isCreating = false
+                if success {
+                    dismiss()
+                } else {
+                    showError = true
+                }
+            }
+        }
+    }
+}
+
+struct EditScheduledSessionView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
+    let session: ScheduledPomodoroSession
+    @State private var selectedRoutine: RoutineConfiguration
+    @State private var date: Date
+    @State private var repeatPattern: RepeatPattern
+    @State private var isSaving = false
+    @State private var showError = false
+    @State private var showDeleteConfirm = false
+
+    init(session: ScheduledPomodoroSession) {
+        self.session = session
+        _selectedRoutine = State(initialValue: session.routineConfig)
+        _date = State(initialValue: session.scheduledDate)
+        _repeatPattern = State(initialValue: session.repeatPattern)
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Routine") {
+                    Picker("Select Routine", selection: $selectedRoutine) {
+                        ForEach(RoutineConfiguration.presets, id: \.name) { preset in
+                            Text(preset.name).tag(preset)
+                        }
+                        ForEach(customRoutines) { routine in
+                            Text(routine.name).tag(routine.configuration)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Duration: ~\(selectedRoutine.totalDurationMinutes) minutes")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(selectedRoutine.totalRounds) rounds of \(selectedRoutine.workDuration)min work")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Section("Schedule") {
+                    DatePicker("Date & Time", selection: $date, in: Date()...)
+                }
+
+                Section("Repeat") {
+                    Picker("Frequency", selection: $repeatPattern) {
+                        ForEach(RepeatPattern.allCases, id: \.self) { pattern in
+                            Text(pattern.rawValue).tag(pattern)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteConfirm = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Delete Session")
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Edit Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveChanges()
+                    }
+                    .disabled(isSaving)
+                }
+            }
+            .alert("Failed to Update", isPresented: $showError) {
+                Button("OK") {}
+            } message: {
+                Text("Could not update the session. Please try again.")
+            }
+            .confirmationDialog("Delete Session", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    CalendarService.shared.deleteSession(session)
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure you want to delete this scheduled session? This will also remove it from your calendar.")
+            }
+        }
+    }
+
+    private func saveChanges() {
+        isSaving = true
+        Task {
+            let success = await CalendarService.shared.updateSession(
+                session,
+                routineName: selectedRoutine.name,
+                routineConfig: selectedRoutine,
+                date: date,
+                repeatPattern: repeatPattern
+            )
+
+            await MainActor.run {
+                isSaving = false
                 if success {
                     dismiss()
                 } else {
