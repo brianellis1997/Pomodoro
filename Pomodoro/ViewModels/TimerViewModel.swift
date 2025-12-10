@@ -13,6 +13,7 @@ class TimerViewModel: ObservableObject {
     @Published var sessionFailed: Bool = false
     @Published var focusModeViolationCount: Int = 0
     @Published var showCloseCallMessage: Bool = false
+    @Published var violationBannerDismissed: Bool = false
 
     static let focusGracePeriod: TimeInterval = 5.0
 
@@ -211,8 +212,13 @@ class TimerViewModel: ObservableObject {
         focusModeGraceUntil = Date().addingTimeInterval(seconds)
     }
 
+    func dismissViolationBanner() {
+        violationBannerDismissed = true
+    }
+
     func resetFocusModeViolation() {
         sessionFailed = false
+        violationBannerDismissed = false
     }
 
     private func handlePhaseComplete(_ phase: TimerPhase) {

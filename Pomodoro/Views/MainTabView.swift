@@ -180,7 +180,7 @@ struct TimerTab: View {
             TimerView(viewModel: timerViewModel)
 
             VStack {
-                if timerViewModel.sessionFailed && timerViewModel.focusModeEnabled {
+                if timerViewModel.sessionFailed && timerViewModel.focusModeEnabled && !timerViewModel.violationBannerDismissed {
                     VStack(spacing: 4) {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -193,7 +193,7 @@ struct TimerTab: View {
                             .font(.caption2)
                             .foregroundColor(.secondary)
                         Button("Dismiss") {
-                            timerViewModel.resetFocusModeViolation()
+                            timerViewModel.dismissViolationBanner()
                         }
                         .font(.caption)
                         .foregroundColor(.pomodoroRed)
@@ -287,6 +287,7 @@ struct TimerTab: View {
         }
         .animation(.easeInOut(duration: 0.3), value: timerViewModel.showCloseCallMessage)
         .animation(.easeInOut(duration: 0.3), value: timerViewModel.sessionFailed)
+        .animation(.easeInOut(duration: 0.3), value: timerViewModel.violationBannerDismissed)
         .onChange(of: timerViewModel.state) { oldState, newState in
             if oldState == .idle && newState == .running {
                 sessionStartTime = Date()
