@@ -115,6 +115,7 @@ class TimerEngine: ObservableObject {
         timer?.invalidate()
         timer = nil
         endDate = nil
+        state = .idle
 
         let completedPhase = phase
         onPhaseComplete?(completedPhase)
@@ -127,8 +128,6 @@ class TimerEngine: ObservableObject {
         if shouldAutoStart {
             start()
             onAutoStart?()
-        } else {
-            state = .idle
         }
     }
 

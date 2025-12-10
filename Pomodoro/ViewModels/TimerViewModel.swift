@@ -142,6 +142,10 @@ class TimerViewModel: ObservableObject {
     func onAppWentToBackground() {
         guard focusModeEnabled && isRunning && phase == .work else { return }
 
+        if sessionFailed {
+            return
+        }
+
         if let graceUntil = focusModeGraceUntil, Date() < graceUntil {
             return
         }
@@ -212,6 +216,7 @@ class TimerViewModel: ObservableObject {
     }
 
     private func handlePhaseComplete(_ phase: TimerPhase) {
+        cancelTimerNotification()
         scheduleCompletionNotification(for: phase)
     }
 
