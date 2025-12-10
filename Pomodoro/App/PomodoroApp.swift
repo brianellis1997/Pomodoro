@@ -17,6 +17,7 @@ struct PomodoroApp: App {
             StudySession.self,
             UserStats.self,
             AppSettings.self,
+            SessionTag.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

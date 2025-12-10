@@ -9,6 +9,17 @@ final class StudySession {
     var pointsEarned: Int
     var completedAt: Date
     var wasFullSession: Bool
+    var tagsData: String
+
+    var tags: [String] {
+        get {
+            guard !tagsData.isEmpty else { return [] }
+            return tagsData.components(separatedBy: ",")
+        }
+        set {
+            tagsData = newValue.joined(separator: ",")
+        }
+    }
 
     init(
         id: UUID = UUID(),
@@ -16,7 +27,8 @@ final class StudySession {
         durationMinutes: Int,
         pointsEarned: Int = 0,
         completedAt: Date = Date(),
-        wasFullSession: Bool = true
+        wasFullSession: Bool = true,
+        tags: [String] = []
     ) {
         self.id = id
         self.routineName = routineName
@@ -24,5 +36,6 @@ final class StudySession {
         self.pointsEarned = pointsEarned
         self.completedAt = completedAt
         self.wasFullSession = wasFullSession
+        self.tagsData = tags.joined(separator: ",")
     }
 }

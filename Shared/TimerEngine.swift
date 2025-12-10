@@ -145,7 +145,7 @@ class TimerEngine: ObservableObject {
     private func advancePhase() {
         switch phase {
         case .work:
-            if currentRound >= totalRounds {
+            if currentRound % roundsBeforeLongBreak == 0 {
                 phase = .longBreak
                 totalTime = longBreakDuration
             } else {
@@ -153,11 +153,15 @@ class TimerEngine: ObservableObject {
                 totalTime = shortBreakDuration
             }
         case .shortBreak:
-            currentRound = min(currentRound + 1, totalRounds)
+            currentRound += 1
             phase = .work
             totalTime = workDuration
         case .longBreak:
-            currentRound = 1
+            if currentRound >= totalRounds {
+                currentRound = 1
+            } else {
+                currentRound += 1
+            }
             phase = .work
             totalTime = workDuration
         }

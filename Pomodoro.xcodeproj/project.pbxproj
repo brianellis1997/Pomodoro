@@ -37,6 +37,7 @@
 		7204255C7A77D739B62EC73A /* TimerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C353FADFBAFFF3B678B2267E /* TimerEngine.swift */; };
 		728F9A92897CA0EBDDA28F7C /* PomodoroWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E71142AA79FE3493024E0CC4 /* PomodoroWidgetBundle.swift */; };
 		770145EB3AADCC9489665815 /* NotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD432F4C4B1CD8A922B2503F /* NotificationDelegate.swift */; };
+		77661E592CB48B044BE3CC25 /* SessionTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16E9055126725E87C54978D /* SessionTag.swift */; };
 		7ED39B4E4D115ABAA04DED93 /* PomodoroLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B74548553857E323CE20A05 /* PomodoroLiveActivity.swift */; };
 		822F81D8AD9E6AB11CF48BA9 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */; };
 		882F33FC1D47D467A5F99B2E /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCFA3BAD7F341C63DEFD06D /* Colors.swift */; };
@@ -62,6 +63,7 @@
 		EC0DE55E5B93CEC6C470D00F /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */; };
 		F7B5D592480BA491EC5E898E /* RoutineConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2528E822064375A69069A2 /* RoutineConfiguration.swift */; };
 		F7D6CA92FED1E5FE082FE6EF /* PomodoroActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD4542D0C7308ECD4AFC277 /* PomodoroActivityAttributes.swift */; };
+		FB3C50C7B23212DB2BD9D4C5 /* TagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A29DA84739FA9BEC68F16D /* TagManagementView.swift */; };
 		FD7A894017122AB0A781745E /* RoutineConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2528E822064375A69069A2 /* RoutineConfiguration.swift */; };
 /* End PBXBuildFile section */
 
@@ -154,6 +156,7 @@
 		CC93B2BD5546E302DA8727FB /* WatchStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStatsView.swift; sourceTree = "<group>"; };
 		CF2E5CCB442A8E09A3931715 /* TimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModel.swift; sourceTree = "<group>"; };
 		D69F9BE877F71C255F3F5A80 /* WatchTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTimerView.swift; sourceTree = "<group>"; };
+		D7A29DA84739FA9BEC68F16D /* TagManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagManagementView.swift; sourceTree = "<group>"; };
 		D907D02DD8C48F47741B9564 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DBCFA3BAD7F341C63DEFD06D /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		DC8602E4D3D7FF539C558A57 /* PomodoroWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PomodoroWidget.entitlements; sourceTree = "<group>"; };
@@ -162,6 +165,7 @@
 		E3D5FF2B8E5E0229482835B3 /* PomodoroWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PomodoroWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4134091A299482E31104F18 /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
 		E71142AA79FE3493024E0CC4 /* PomodoroWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroWidgetBundle.swift; sourceTree = "<group>"; };
+		F16E9055126725E87C54978D /* SessionTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTag.swift; sourceTree = "<group>"; };
 		F1B23EEFFB7247980C622713 /* PomodoroApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroApp.swift; sourceTree = "<group>"; };
 		F4FADA8346945B4ACF382328 /* CalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarService.swift; sourceTree = "<group>"; };
 		F8F6582483D53F45D221A35D /* PomodoroWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroWatchWidget.swift; sourceTree = "<group>"; };
@@ -178,6 +182,7 @@
 				63CD41765F12DA0A534BEA0F /* RoutineBuilderView.swift */,
 				9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */,
 				37381671A153838D503EE9C5 /* StatsView.swift */,
+				D7A29DA84739FA9BEC68F16D /* TagManagementView.swift */,
 				DC8D99F625247939824CF210 /* TimerView.swift */,
 			);
 			path = Views;
@@ -319,6 +324,7 @@
 				E4134091A299482E31104F18 /* Achievement.swift */,
 				512BDB4D07FBA84442EAAEE0 /* AppSettings.swift */,
 				8F3F41736F30C2F2A940E988 /* Routine.swift */,
+				F16E9055126725E87C54978D /* SessionTag.swift */,
 				BEA0F29A2A1F53DD7704B116 /* StudySession.swift */,
 				4E2E201CAB6FFF0F2845319F /* UserStats.swift */,
 			);
@@ -548,11 +554,13 @@
 				0FA11D496F55A8EEF5F401A6 /* RoutineBuilderView.swift in Sources */,
 				CFEF0D0224CF65EC3FCFAB71 /* RoutineConfiguration.swift in Sources */,
 				46935FAABAB86C1F692C4D7F /* RoutineSyncService.swift in Sources */,
+				77661E592CB48B044BE3CC25 /* SessionTag.swift in Sources */,
 				49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */,
 				595FA4890D51A1F098025580 /* SpotifyService.swift in Sources */,
 				AB69F235315336AB18D62694 /* StatsService.swift in Sources */,
 				4E8939235A35A280A7559A03 /* StatsView.swift in Sources */,
 				88644C4522C8F6258008F966 /* StudySession.swift in Sources */,
+				FB3C50C7B23212DB2BD9D4C5 /* TagManagementView.swift in Sources */,
 				298248D4D66941AF8827D7C1 /* TimerControlsView.swift in Sources */,
 				D0E0928FAD8EF5E7991C8B09 /* TimerEngine.swift in Sources */,
 				98C52C1B0E8494FF90FDA923 /* TimerView.swift in Sources */,

@@ -146,22 +146,16 @@ class TimerViewModel: ObservableObject {
             return
         }
 
-        let brightnessAtBackground = UIScreen.main.brightness
+        let screenBrightness = UIScreen.main.brightness
+        let screenLikelyOff = screenBrightness < 0.01
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-
-            let currentBrightness = UIScreen.main.brightness
-            let screenLikelyOff = currentBrightness < 0.01 || brightnessAtBackground < 0.01
-
-            if screenLikelyOff {
-                return
-            }
-
-            self.backgroundStartTime = Date()
-            self.sendGracePeriodWarningNotification()
-            self.scheduleViolationNotification()
+        if screenLikelyOff {
+            return
         }
+
+        backgroundStartTime = Date()
+        sendGracePeriodWarningNotification()
+        scheduleViolationNotification()
     }
 
     private func sendGracePeriodWarningNotification() {

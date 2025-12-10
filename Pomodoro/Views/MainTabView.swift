@@ -142,17 +142,37 @@ struct MainTabView: View {
 }
 
 struct TimerTab: View {
+    @Environment(\.modelContext) private var modelContext
     @ObservedObject var timerViewModel: TimerViewModel
     @ObservedObject var statsService: StatsService
     @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
     @Query private var settingsArray: [AppSettings]
+    @Query private var availableTags: [SessionTag]
 
     @State private var sessionStartTime: Date?
+    @State private var showCompletionSheet = false
     @State private var showCompletionAlert = false
     @State private var earnedPoints = 0
+    @State private var selectedTags: Set<String> = []
+    @State private var pendingSessionData: PendingSession?
 
-    private var settings: AppSettings? {
-        settingsArray.first
+    struct PendingSession {
+        let routineName: String
+        let durationMinutes: Int
+        let wasFullSession: Bool
+        let hadFocusViolation: Bool
+        let focusModeEnabled: Bool
+        let points: Int
+    }
+
+    private var settings: AppSettings {
+        if let existing = settingsArray.first {
+            return existing
+        }
+        let newSettings = AppSettings()
+        modelContext.insert(newSettings)
+        try? modelContext.save()
+        return newSettings
     }
 
     var body: some View {
@@ -282,37 +302,52 @@ struct TimerTab: View {
         } message: {
             Text("You earned \(earnedPoints) points!")
         }
+        .sheet(isPresented: $showCompletionSheet) {
+            SessionCompletionSheet(
+                earnedPoints: earnedPoints,
+                selectedTags: $selectedTags,
+                availableTags: availableTags,
+                onSave: {
+                    recordSessionWithTags(Array(selectedTags))
+                    showCompletionSheet = false
+                },
+                onSkip: {
+                    recordSessionWithTags([])
+                    showCompletionSheet = false
+                }
+            )
+        }
         .onAppear {
             syncSettings()
         }
-        .onChange(of: settings?.autoStartBreaks) { _, _ in
+        .onChange(of: settings.autoStartBreaks) { _, _ in
             syncSettings()
         }
-        .onChange(of: settings?.autoStartWork) { _, _ in
+        .onChange(of: settings.autoStartWork) { _, _ in
             syncSettings()
         }
-        .onChange(of: settings?.focusModeEnabled) { _, _ in
+        .onChange(of: settings.focusModeEnabled) { _, _ in
             syncSettings()
         }
-        .onChange(of: settings?.spotifyEnabled) { _, _ in
+        .onChange(of: settings.spotifyEnabled) { _, _ in
             syncSettings()
         }
-        .onChange(of: settings?.spotifyStudyPlaylistUri) { _, _ in
+        .onChange(of: settings.spotifyStudyPlaylistUri) { _, _ in
             syncSettings()
         }
-        .onChange(of: settings?.spotifyBreakPlaylistUri) { _, _ in
+        .onChange(of: settings.spotifyBreakPlaylistUri) { _, _ in
             syncSettings()
         }
     }
 
     private func syncSettings() {
         timerViewModel.updateSettings(
-            autoStartBreaks: settings?.autoStartBreaks ?? false,
-            autoStartWork: settings?.autoStartWork ?? false,
-            focusModeEnabled: settings?.focusModeEnabled ?? false,
-            spotifyEnabled: settings?.spotifyEnabled ?? false,
-            spotifyStudyPlaylistUri: settings?.spotifyStudyPlaylistUri,
-            spotifyBreakPlaylistUri: settings?.spotifyBreakPlaylistUri
+            autoStartBreaks: settings.autoStartBreaks,
+            autoStartWork: settings.autoStartWork,
+            focusModeEnabled: settings.focusModeEnabled,
+            spotifyEnabled: settings.spotifyEnabled,
+            spotifyStudyPlaylistUri: settings.spotifyStudyPlaylistUri,
+            spotifyBreakPlaylistUri: settings.spotifyBreakPlaylistUri
         )
     }
 
@@ -329,26 +364,133 @@ struct TimerTab: View {
 
         let minimumThreshold = 0.80
         let hadViolation = timerViewModel.sessionFailed
+        let wasFullSession = completionPercentage >= 0.95
 
         if completionPercentage >= minimumThreshold {
-            statsService.recordSession(
+            let points = hadViolation ? workDurationMinutes : workDurationMinutes * 3
+            earnedPoints = points
+
+            pendingSessionData = PendingSession(
                 routineName: timerViewModel.currentRoutineName,
                 durationMinutes: workDurationMinutes,
-                wasFullSession: completionPercentage >= 0.95,
+                wasFullSession: wasFullSession,
                 hadFocusViolation: hadViolation,
-                focusModeEnabled: timerViewModel.focusModeEnabled
+                focusModeEnabled: timerViewModel.focusModeEnabled,
+                points: points
             )
 
-            if hadViolation {
-                earnedPoints = workDurationMinutes
+            selectedTags = []
+
+            if availableTags.isEmpty {
+                recordSessionWithTags([])
             } else {
-                earnedPoints = workDurationMinutes * 3
+                showCompletionSheet = true
             }
-            showCompletionAlert = true
         }
 
         timerViewModel.resetFocusModeViolation()
         sessionStartTime = nil
+    }
+
+    private func recordSessionWithTags(_ tags: [String]) {
+        guard let session = pendingSessionData else { return }
+
+        statsService.recordSession(
+            routineName: session.routineName,
+            durationMinutes: session.durationMinutes,
+            wasFullSession: session.wasFullSession,
+            hadFocusViolation: session.hadFocusViolation,
+            focusModeEnabled: session.focusModeEnabled,
+            tags: tags
+        )
+
+        pendingSessionData = nil
+        showCompletionAlert = true
+    }
+}
+
+struct SessionCompletionSheet: View {
+    let earnedPoints: Int
+    @Binding var selectedTags: Set<String>
+    let availableTags: [SessionTag]
+    let onSave: () -> Void
+    let onSkip: () -> Void
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                VStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.green)
+
+                    Text("Session Complete!")
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    Text("You earned \(earnedPoints) points")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Add tags to this session")
+                        .font(.headline)
+
+                    if availableTags.isEmpty {
+                        Text("No tags available. Create tags in Settings.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        FlowLayout(spacing: 8) {
+                            ForEach(availableTags) { tag in
+                                TagToggleButton(
+                                    tag: tag,
+                                    isSelected: selectedTags.contains(tag.name)
+                                ) {
+                                    if selectedTags.contains(tag.name) {
+                                        selectedTags.remove(tag.name)
+                                    } else {
+                                        selectedTags.insert(tag.name)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+
+                Spacer()
+
+                VStack(spacing: 12) {
+                    Button {
+                        onSave()
+                    } label: {
+                        Text(selectedTags.isEmpty ? "Save Without Tags" : "Save with \(selectedTags.count) Tag\(selectedTags.count == 1 ? "" : "s")")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.pomodoroRed)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Skip") {
+                        onSkip()
+                    }
+                    .foregroundColor(.secondary)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 

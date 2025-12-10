@@ -26,6 +26,7 @@ struct SettingsView: View {
                 timerBehaviorSection
                 musicSection
                 integrationsSection
+                tagsSection
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -268,6 +269,28 @@ struct SettingsView: View {
             Label("Integrations", systemImage: "link")
         }
     }
+
+    private var tagsSection: some View {
+        Section {
+            NavigationLink {
+                TagManagementView()
+            } label: {
+                HStack {
+                    Text("Manage Tags")
+                    Spacer()
+                    Text("\(tagCount) tags")
+                        .foregroundColor(.secondary)
+                }
+            }
+        } header: {
+            Label("Session Tags", systemImage: "tag.fill")
+        } footer: {
+            Text("Add tags to categorize your study sessions")
+        }
+    }
+
+    @Query private var allTags: [SessionTag]
+    private var tagCount: Int { allTags.count }
 
     private var aboutSection: some View {
         Section {

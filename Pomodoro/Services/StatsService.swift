@@ -136,7 +136,7 @@ class StatsService: ObservableObject {
         }
     }
 
-    func recordSession(routineName: String, durationMinutes: Int, wasFullSession: Bool = true, hadFocusViolation: Bool = false, focusModeEnabled: Bool = false) {
+    func recordSession(routineName: String, durationMinutes: Int, wasFullSession: Bool = true, hadFocusViolation: Bool = false, focusModeEnabled: Bool = false, tags: [String] = []) {
         guard let context = modelContext else { return }
 
         let basePoints = durationMinutes * 2
@@ -155,7 +155,8 @@ class StatsService: ObservableObject {
             routineName: routineName,
             durationMinutes: durationMinutes,
             pointsEarned: pointsEarned,
-            wasFullSession: wasFullSession && !hadFocusViolation
+            wasFullSession: wasFullSession && !hadFocusViolation,
+            tags: tags
         )
 
         context.insert(session)
