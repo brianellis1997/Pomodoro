@@ -50,7 +50,10 @@ struct WatchTimerView: View {
                 .padding(.vertical, 8)
 
                 HStack(spacing: 20) {
-                    Button(action: engine.reset) {
+                    Button(action: {
+                        engine.reset()
+                        sendTimerStateToPhone()
+                    }) {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.body)
                     }
@@ -65,6 +68,7 @@ struct WatchTimerView: View {
                             }
                             engine.start()
                         }
+                        sendTimerStateToPhone()
                     }) {
                         Image(systemName: engine.state == .running ? "pause.fill" : "play.fill")
                             .font(.title3)
@@ -81,6 +85,7 @@ struct WatchTimerView: View {
                             checkAndRecordSession()
                         }
                         engine.skip()
+                        sendTimerStateToPhone()
                     }) {
                         Image(systemName: "forward.fill")
                             .font(.body)
@@ -105,6 +110,17 @@ struct WatchTimerView: View {
                     syncedRoutines = routines
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .timerStateSyncReceived)) { notification in
+                if let timerState = notification.object as? TimerStateTransfer {
+                    applyTimerState(timerState)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .settingsSyncReceived)) { notification in
+                if let settings = notification.object as? SettingsTransfer {
+                    engine.autoStartBreaks = settings.autoStartBreaks
+                    engine.autoStartWork = settings.autoStartWork
+                }
+            }
             .onReceive(engine.objectWillChange) { _ in
                 syncWidgetData()
             }
@@ -116,6 +132,7 @@ struct WatchTimerView: View {
                     justSkipped = false
                 }
                 previousPhase = newPhase
+                sendTimerStateToPhone()
             }
             .onAppear {
                 lastWorkDuration = Int(engine.workDuration / 60)
@@ -177,6 +194,48 @@ struct WatchTimerView: View {
         case .longBreak:
             return .pomodoroBlue
         }
+    }
+
+    private func sendTimerStateToPhone() {
+        connectivityManager.sendTimerState(
+            timeRemaining: engine.timeRemaining,
+            totalTime: engine.totalTime,
+            phase: engine.phase,
+            currentRound: engine.currentRound,
+            totalRounds: engine.totalRounds,
+            isRunning: engine.state == .running,
+            routineName: currentRoutineName,
+            workDuration: engine.workDuration,
+            shortBreakDuration: engine.shortBreakDuration,
+            longBreakDuration: engine.longBreakDuration
+        )
+    }
+
+    private func applyTimerState(_ state: TimerStateTransfer) {
+        guard let phase = TimerPhase(rawValue: state.phase) else { return }
+
+        if engine.state == .running {
+            engine.pause()
+        }
+
+        engine.phase = phase
+        engine.timeRemaining = state.timeRemaining
+        engine.totalTime = state.totalTime
+        engine.currentRound = state.currentRound
+        engine.totalRounds = state.totalRounds
+        engine.workDuration = state.workDuration
+        engine.shortBreakDuration = state.shortBreakDuration
+        engine.longBreakDuration = state.longBreakDuration
+        currentRoutineName = state.routineName
+
+        if state.isRunning {
+            if engine.phase == .work && sessionStartTime == nil {
+                sessionStartTime = Date()
+            }
+            engine.start()
+        }
+
+        syncWidgetData()
     }
 }
 

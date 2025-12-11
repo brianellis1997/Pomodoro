@@ -28,6 +28,25 @@ struct StatsUpdate: Codable {
     let level: Int
 }
 
+struct TimerStateTransfer: Codable {
+    let timeRemaining: TimeInterval
+    let totalTime: TimeInterval
+    let phase: String
+    let currentRound: Int
+    let totalRounds: Int
+    let isRunning: Bool
+    let routineName: String
+    let timestamp: Date
+    let workDuration: TimeInterval
+    let shortBreakDuration: TimeInterval
+    let longBreakDuration: TimeInterval
+}
+
+struct SettingsTransfer: Codable {
+    let autoStartBreaks: Bool
+    let autoStartWork: Bool
+}
+
 class WatchConnectivityManager: NSObject, ObservableObject {
     static let shared = WatchConnectivityManager()
 
@@ -82,24 +101,62 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         currentRound: Int,
         totalRounds: Int,
         isRunning: Bool,
-        routineName: String
+        routineName: String,
+        workDuration: TimeInterval = 25 * 60,
+        shortBreakDuration: TimeInterval = 5 * 60,
+        longBreakDuration: TimeInterval = 20 * 60
     ) {
         guard let session = session, session.activationState == .activated else { return }
 
-        let message: [String: Any] = [
-            "timerState": [
-                "timeRemaining": timeRemaining,
-                "totalTime": totalTime,
-                "phase": phase.rawValue,
-                "currentRound": currentRound,
-                "totalRounds": totalRounds,
-                "isRunning": isRunning,
-                "routineName": routineName
-            ]
-        ]
+        let transfer = TimerStateTransfer(
+            timeRemaining: timeRemaining,
+            totalTime: totalTime,
+            phase: phase.rawValue,
+            currentRound: currentRound,
+            totalRounds: totalRounds,
+            isRunning: isRunning,
+            routineName: routineName,
+            timestamp: Date(),
+            workDuration: workDuration,
+            shortBreakDuration: shortBreakDuration,
+            longBreakDuration: longBreakDuration
+        )
 
-        if session.isReachable {
-            session.sendMessage(message, replyHandler: nil, errorHandler: nil)
+        do {
+            let data = try JSONEncoder().encode(transfer)
+            let message = ["timerStateSync": data]
+
+            if session.isReachable {
+                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
+                    print("Error sending timer state: \(error)")
+                })
+            }
+        } catch {
+            print("Error encoding timer state: \(error)")
+        }
+    }
+
+    func sendSettings(autoStartBreaks: Bool, autoStartWork: Bool) {
+        guard let session = session, session.activationState == .activated else { return }
+
+        let transfer = SettingsTransfer(
+            autoStartBreaks: autoStartBreaks,
+            autoStartWork: autoStartWork
+        )
+
+        do {
+            let data = try JSONEncoder().encode(transfer)
+            let message = ["settingsSync": data]
+
+            if session.isReachable {
+                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
+                    print("Error sending settings: \(error)")
+                })
+            } else {
+                try session.updateApplicationContext(message)
+            }
+        } catch {
+            print("Error encoding settings: \(error)")
         }
     }
 
@@ -241,6 +298,28 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if message["requestStats"] != nil {
             NotificationCenter.default.post(name: .statsRequested, object: nil)
         }
+
+        if let timerSyncData = message["timerStateSync"] as? Data {
+            do {
+                let timerState = try JSONDecoder().decode(TimerStateTransfer.self, from: timerSyncData)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .timerStateSyncReceived, object: timerState)
+                }
+            } catch {
+                print("Error decoding timer state sync: \(error)")
+            }
+        }
+
+        if let settingsData = message["settingsSync"] as? Data {
+            do {
+                let settings = try JSONDecoder().decode(SettingsTransfer.self, from: settingsData)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .settingsSyncReceived, object: settings)
+                }
+            } catch {
+                print("Error decoding settings sync: \(error)")
+            }
+        }
     }
 }
 
@@ -248,6 +327,8 @@ extension Notification.Name {
     static let routinesReceived = Notification.Name("routinesReceived")
     static let routinesRequested = Notification.Name("routinesRequested")
     static let timerStateReceived = Notification.Name("timerStateReceived")
+    static let timerStateSyncReceived = Notification.Name("timerStateSyncReceived")
+    static let settingsSyncReceived = Notification.Name("settingsSyncReceived")
     static let sessionCompletionReceived = Notification.Name("sessionCompletionReceived")
     static let statsUpdateReceived = Notification.Name("statsUpdateReceived")
     static let statsRequested = Notification.Name("statsRequested")

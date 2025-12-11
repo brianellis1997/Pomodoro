@@ -97,6 +97,11 @@ struct MainTabView: View {
         .onReceive(NotificationCenter.default.publisher(for: .startScheduledSession)) { notification in
             handleScheduledSessionStart(notification)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .timerStateSyncReceived)) { notification in
+            if let timerState = notification.object as? TimerStateTransfer {
+                timerViewModel.applyTimerStateFromWatch(timerState)
+            }
+        }
     }
 
     private func handleScheduledSessionStart(_ notification: Notification) {
@@ -350,6 +355,7 @@ struct TimerTab: View {
             spotifyStudyPlaylistUri: settings.spotifyStudyPlaylistUri,
             spotifyBreakPlaylistUri: settings.spotifyBreakPlaylistUri
         )
+        timerViewModel.sendSettingsToWatch()
     }
 
     private func checkAndRecordSession() {

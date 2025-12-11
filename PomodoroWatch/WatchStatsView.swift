@@ -43,6 +43,22 @@ struct WatchStatsView: View {
                         color: .pomodoroBlue
                     )
                 }
+
+                HStack(spacing: 8) {
+                    StatCard(
+                        title: "Points",
+                        value: formatPoints(totalPoints),
+                        subtitle: "earned",
+                        color: .yellow
+                    )
+
+                    StatCard(
+                        title: "Level",
+                        value: "\(level)",
+                        subtitle: levelTitle(level),
+                        color: .purple
+                    )
+                }
             }
             .padding(.horizontal, 8)
         }
@@ -115,6 +131,30 @@ struct WatchStatsView: View {
             return "\(hours)h"
         }
         return "\(hours)h \(mins)m"
+    }
+
+    private func formatPoints(_ points: Int) -> String {
+        if points >= 1000 {
+            let k = Double(points) / 1000.0
+            return String(format: "%.1fk", k)
+        }
+        return "\(points)"
+    }
+
+    private func levelTitle(_ level: Int) -> String {
+        switch level {
+        case 1: return "beginner"
+        case 2: return "novice"
+        case 3: return "student"
+        case 4: return "scholar"
+        case 5: return "expert"
+        case 6: return "master"
+        case 7: return "sage"
+        case 8: return "guru"
+        case 9: return "legend"
+        case 10: return "grandmaster"
+        default: return "level \(level)"
+        }
     }
 }
 

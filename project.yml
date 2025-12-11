@@ -51,6 +51,8 @@ targets:
     dependencies:
       - target: PomodoroWidget
         embed: true
+      - target: PomodoroWatch Watch App
+        embed: true
     entitlements:
       path: Pomodoro/Pomodoro.entitlements
       properties:
@@ -81,9 +83,6 @@ targets:
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.bdogellis.pomodoro
     dependencies:
-      - target: Pomodoro
-        embed: false
-        link: false
       - target: PomodoroWatchWidget
         embed: true
     entitlements:

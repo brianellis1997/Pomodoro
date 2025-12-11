@@ -13,7 +13,8 @@
       "Bash(xargs ls:*)",
       "Bash(sips:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

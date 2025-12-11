@@ -241,6 +241,7 @@ struct PomodoroWatchWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: WatchPomodoroProvider()) { entry in
             PomodoroWatchWidgetEntryView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Pomodoro")
         .description("Track your focus timer")

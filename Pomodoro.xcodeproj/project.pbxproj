@@ -61,6 +61,7 @@
 		E8844FFAD2608B61B1A09532 /* TimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF2E5CCB442A8E09A3931715 /* TimerViewModel.swift */; };
 		EBBFC7FBAFCB46CBCB53EA49 /* PomodoroWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F5BE754BEBB7878CC9B3D8 /* PomodoroWidget.swift */; };
 		EC0DE55E5B93CEC6C470D00F /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */; };
+		EC81388AEB69EF8186AE55E7 /* PomodoroWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E1FBC880062B86753408B912 /* PomodoroWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F7B5D592480BA491EC5E898E /* RoutineConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2528E822064375A69069A2 /* RoutineConfiguration.swift */; };
 		F7D6CA92FED1E5FE082FE6EF /* PomodoroActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD4542D0C7308ECD4AFC277 /* PomodoroActivityAttributes.swift */; };
 		FB3C50C7B23212DB2BD9D4C5 /* TagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A29DA84739FA9BEC68F16D /* TagManagementView.swift */; };
@@ -68,13 +69,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		007BDD04AB4D7D1919F95BAB /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 696C6DDA24A5C4A402796F89 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 7903707A219EEB0A29FD23BD;
-			remoteInfo = Pomodoro;
-		};
 		305030CCE4F1DC91B69DD95E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 696C6DDA24A5C4A402796F89 /* Project object */;
@@ -89,9 +83,27 @@
 			remoteGlobalIDString = 50C6C3B5CD979C85E4E0181C;
 			remoteInfo = PomodoroWatchWidget;
 		};
+		A625A29A5A47E144F375FCC2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 696C6DDA24A5C4A402796F89 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E879133508F9BE46A015916E;
+			remoteInfo = "PomodoroWatch Watch App";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		16E9D7F682DB094E40DEECA0 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				EC81388AEB69EF8186AE55E7 /* PomodoroWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2FE03EBBFD04AC4AFBD27CEB /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -390,11 +402,13 @@
 				BDF2DF9B9A082E540AD3F574 /* Sources */,
 				4E9E285D4E4C573489FD28D2 /* Resources */,
 				B32C3C323E8171991F75F0B1 /* Embed Foundation Extensions */,
+				16E9D7F682DB094E40DEECA0 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				DB1D125C04BC3512D7A82569 /* PBXTargetDependency */,
+				8F822B27A2591326776069F6 /* PBXTargetDependency */,
 			);
 			name = Pomodoro;
 			packageProductDependencies = (
@@ -414,7 +428,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				B8245FC7BF4A3F49E01C3127 /* PBXTargetDependency */,
 				BADA76E4E8BF8D11342F25BE /* PBXTargetDependency */,
 			);
 			name = "PomodoroWatch Watch App";
@@ -431,7 +444,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 1620;
 			};
 			buildConfigurationList = 3BA78823BED85E98FA1F9BA4 /* Build configuration list for PBXProject "Pomodoro" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -573,10 +586,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		B8245FC7BF4A3F49E01C3127 /* PBXTargetDependency */ = {
+		8F822B27A2591326776069F6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 7903707A219EEB0A29FD23BD /* Pomodoro */;
-			targetProxy = 007BDD04AB4D7D1919F95BAB /* PBXContainerItemProxy */;
+			target = E879133508F9BE46A015916E /* PomodoroWatch Watch App */;
+			targetProxy = A625A29A5A47E144F375FCC2 /* PBXContainerItemProxy */;
 		};
 		BADA76E4E8BF8D11342F25BE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -658,10 +671,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -715,10 +730,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;

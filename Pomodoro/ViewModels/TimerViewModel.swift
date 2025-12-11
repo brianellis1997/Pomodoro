@@ -360,6 +360,7 @@ class TimerViewModel: ObservableObject {
         }
         saveTimerState()
         syncLiveActivity()
+        sendTimerStateToWatch()
     }
 
     private func triggerSpotifyPlayback() {
@@ -384,11 +385,13 @@ class TimerViewModel: ObservableObject {
         clearSavedState()
         liveActivityManager.endActivity()
         syncWidgetData()
+        sendTimerStateToWatch()
     }
 
     func skip() {
         engine.skip()
         syncLiveActivity()
+        sendTimerStateToWatch()
     }
 
     func configure(routine: Routine) {
@@ -433,5 +436,54 @@ class TimerViewModel: ObservableObject {
         }
 
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func applyTimerStateFromWatch(_ state: TimerStateTransfer) {
+        guard let phase = TimerPhase(rawValue: state.phase) else { return }
+
+        if isRunning {
+            engine.pause()
+        }
+
+        engine.phase = phase
+        engine.timeRemaining = state.timeRemaining
+        engine.totalTime = state.totalTime
+        engine.currentRound = state.currentRound
+        engine.totalRounds = state.totalRounds
+        engine.workDuration = state.workDuration
+        engine.shortBreakDuration = state.shortBreakDuration
+        engine.longBreakDuration = state.longBreakDuration
+        currentRoutineName = state.routineName
+
+        if state.isRunning {
+            engine.start()
+            scheduleTimerNotification()
+        }
+
+        saveTimerState()
+        syncLiveActivity()
+        syncWidgetData()
+    }
+
+    func sendTimerStateToWatch() {
+        WatchConnectivityManager.shared.sendTimerState(
+            timeRemaining: timeRemaining,
+            totalTime: totalTime,
+            phase: phase,
+            currentRound: currentRound,
+            totalRounds: totalRounds,
+            isRunning: isRunning,
+            routineName: currentRoutineName,
+            workDuration: engine.workDuration,
+            shortBreakDuration: engine.shortBreakDuration,
+            longBreakDuration: engine.longBreakDuration
+        )
+    }
+
+    func sendSettingsToWatch() {
+        WatchConnectivityManager.shared.sendSettings(
+            autoStartBreaks: engine.autoStartBreaks,
+            autoStartWork: engine.autoStartWork
+        )
     }
 }
