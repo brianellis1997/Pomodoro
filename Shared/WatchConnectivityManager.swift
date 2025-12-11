@@ -131,6 +131,9 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                     print("Error sending timer state: \(error)")
                 })
             }
+            #if os(iOS)
+            try session.updateApplicationContext(message)
+            #endif
         } catch {
             print("Error encoding timer state: \(error)")
         }

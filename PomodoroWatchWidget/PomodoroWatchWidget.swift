@@ -10,7 +10,8 @@ struct WatchPomodoroProvider: TimelineProvider {
             phase: .work,
             currentRound: 1,
             totalRounds: 4,
-            isRunning: false
+            isRunning: false,
+            endTime: nil
         )
     }
 
@@ -88,7 +89,8 @@ struct WatchPomodoroProvider: TimelineProvider {
             phase: phase,
             currentRound: currentRound,
             totalRounds: totalRounds,
-            isRunning: isRunning
+            isRunning: isRunning,
+            endTime: endTime
         )
     }
 }
@@ -101,6 +103,7 @@ struct WatchPomodoroEntry: TimelineEntry {
     let currentRound: Int
     let totalRounds: Int
     let isRunning: Bool
+    let endTime: Date?
 
     var progress: Double {
         guard totalTime > 0 else { return 1 }
@@ -111,6 +114,11 @@ struct WatchPomodoroEntry: TimelineEntry {
         let minutes = Int(remainingTime) / 60
         let seconds = Int(remainingTime) % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    var timerInterval: ClosedRange<Date>? {
+        guard isRunning, let end = endTime, end > date else { return nil }
+        return date...end
     }
 
     var shortTimeString: String {
@@ -182,13 +190,21 @@ struct PomodoroWatchWidgetEntryView: View {
     }
 
     private var accessoryCorner: some View {
-        Text(entry.timeString)
-            .font(.system(size: 12, weight: .bold, design: .rounded))
-            .widgetCurvesContent()
-            .widgetLabel {
-                ProgressView(value: entry.progress)
-                    .tint(entry.phaseColor)
+        Group {
+            if let interval = entry.timerInterval {
+                Text(timerInterval: interval, countsDown: true)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+            } else {
+                Text(entry.timeString)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
             }
+        }
+        .widgetCurvesContent()
+        .widgetLabel {
+            ProgressView(value: entry.progress)
+                .tint(entry.phaseColor)
+        }
     }
 
     private var accessoryRectangular: some View {
@@ -211,9 +227,15 @@ struct PomodoroWatchWidgetEntryView: View {
             .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.timeString)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                if let interval = entry.timerInterval {
+                    Text(timerInterval: interval, countsDown: true)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                } else {
+                    Text(entry.timeString)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                }
 
                 Text(entry.phaseLabel)
                     .font(.caption2)
@@ -229,8 +251,15 @@ struct PomodoroWatchWidgetEntryView: View {
     }
 
     private var accessoryInline: some View {
-        Text(entry.timeString)
-            .monospacedDigit()
+        Group {
+            if let interval = entry.timerInterval {
+                Text(timerInterval: interval, countsDown: true)
+                    .monospacedDigit()
+            } else {
+                Text(entry.timeString)
+                    .monospacedDigit()
+            }
+        }
     }
 }
 
@@ -264,7 +293,8 @@ struct PomodoroWatchWidget: Widget {
         phase: .work,
         currentRound: 2,
         totalRounds: 4,
-        isRunning: true
+        isRunning: true,
+        endTime: Date().addingTimeInterval(15 * 60)
     )
 }
 
@@ -278,6 +308,7 @@ struct PomodoroWatchWidget: Widget {
         phase: .shortBreak,
         currentRound: 2,
         totalRounds: 4,
-        isRunning: true
+        isRunning: true,
+        endTime: Date().addingTimeInterval(5 * 60)
     )
 }
