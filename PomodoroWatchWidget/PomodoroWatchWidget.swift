@@ -182,9 +182,11 @@ struct PomodoroWatchWidgetEntryView: View {
                 .scaleEffect(x: -1, y: 1)
 
             Image("TomatoIcon")
+                .renderingMode(.original)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 32, height: 32)
+                .clipShape(Circle())
         }
         .padding(2)
     }
@@ -220,9 +222,11 @@ struct PomodoroWatchWidgetEntryView: View {
                     .scaleEffect(x: -1, y: 1)
 
                 Image("TomatoIcon")
+                    .renderingMode(.original)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 22, height: 22)
+                    .clipShape(Circle())
             }
             .frame(width: 36, height: 36)
 

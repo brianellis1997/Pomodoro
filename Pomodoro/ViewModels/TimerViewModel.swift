@@ -23,6 +23,8 @@ class TimerViewModel: ObservableObject {
 
     private var focusModeGraceUntil: Date?
     private var backgroundStartTime: Date?
+    private var lastCompletedPhase: TimerPhase?
+    private var lastCompletedRound: Int = 0
 
     private let liveActivityManager = LiveActivityManager.shared
     private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
@@ -223,6 +225,16 @@ class TimerViewModel: ObservableObject {
 
     private func handlePhaseComplete(_ phase: TimerPhase) {
         cancelTimerNotification()
+        sendCompletionNotificationIfNeeded(for: phase)
+    }
+
+    private func sendCompletionNotificationIfNeeded(for phase: TimerPhase) {
+        let currentRoundForCheck = engine.currentRound
+        if lastCompletedPhase == phase && lastCompletedRound == currentRoundForCheck {
+            return
+        }
+        lastCompletedPhase = phase
+        lastCompletedRound = currentRoundForCheck
         scheduleCompletionNotification(for: phase)
     }
 
@@ -386,6 +398,8 @@ class TimerViewModel: ObservableObject {
         liveActivityManager.endActivity()
         syncWidgetData()
         sendTimerStateToWatch()
+        lastCompletedPhase = nil
+        lastCompletedRound = 0
     }
 
     func skip() {
@@ -439,13 +453,21 @@ class TimerViewModel: ObservableObject {
     }
 
     func applyTimerStateFromWatch(_ state: TimerStateTransfer) {
-        guard let phase = TimerPhase(rawValue: state.phase) else { return }
+        guard let newPhase = TimerPhase(rawValue: state.phase) else { return }
 
-        if isRunning {
+        let previousPhase = engine.phase
+        let wasRunning = isRunning
+
+        if wasRunning {
             engine.pause()
+            cancelTimerNotification()
         }
 
-        engine.phase = phase
+        if wasRunning && previousPhase != newPhase {
+            sendCompletionNotificationIfNeeded(for: previousPhase)
+        }
+
+        engine.phase = newPhase
         engine.timeRemaining = state.timeRemaining
         engine.totalTime = state.totalTime
         engine.currentRound = state.currentRound
