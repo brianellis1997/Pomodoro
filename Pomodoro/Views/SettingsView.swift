@@ -7,7 +7,6 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsArray: [AppSettings]
     @State private var showingCalendarPermission = false
-    @State private var showingMusicPermission = false
 
     private var settings: AppSettings {
         if let existing = settingsArray.first {
@@ -119,59 +118,6 @@ struct SettingsView: View {
 
     private var musicSection: some View {
         Section {
-            Toggle("Apple Music", isOn: Binding(
-                get: { settings.appleMusicEnabled },
-                set: { newValue in
-                    settings.appleMusicEnabled = newValue
-                    if newValue {
-                        requestMusicPermission()
-                    }
-                    try? modelContext.save()
-                }
-            ))
-
-            if settings.appleMusicEnabled {
-                NavigationLink {
-                    PlaylistPickerView(
-                        title: "Study Playlist",
-                        selectedId: Binding(
-                            get: { settings.studyPlaylistId },
-                            set: { newValue in
-                                settings.studyPlaylistId = newValue
-                                try? modelContext.save()
-                            }
-                        )
-                    )
-                } label: {
-                    HStack {
-                        Text("Study Playlist")
-                        Spacer()
-                        Text(settings.studyPlaylistId ?? "None")
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                NavigationLink {
-                    PlaylistPickerView(
-                        title: "Break Playlist",
-                        selectedId: Binding(
-                            get: { settings.breakPlaylistId },
-                            set: { newValue in
-                                settings.breakPlaylistId = newValue
-                                try? modelContext.save()
-                            }
-                        )
-                    )
-                } label: {
-                    HStack {
-                        Text("Break Playlist")
-                        Spacer()
-                        Text(settings.breakPlaylistId ?? "None")
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-
             Toggle("Spotify", isOn: Binding(
                 get: { settings.spotifyEnabled },
                 set: { newValue in
@@ -318,10 +264,6 @@ struct SettingsView: View {
         // TODO: Implement sound preview using AVFoundation
     }
 
-    private func requestMusicPermission() {
-        // TODO: Implement MusicKit authorization
-    }
-
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
@@ -336,26 +278,6 @@ struct SettingsView: View {
                 }
             }
         }
-    }
-}
-
-struct PlaylistPickerView: View {
-    let title: String
-    @Binding var selectedId: String?
-
-    var body: some View {
-        List {
-            Button("None") {
-                selectedId = nil
-            }
-
-            Section("Your Playlists") {
-                Text("Connect Apple Music in Settings to see playlists")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-        }
-        .navigationTitle(title)
     }
 }
 

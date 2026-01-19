@@ -46,3 +46,10 @@ fastlane/test_output
 *~
 .idea/
 *.iml
+
+# Claude Code
+.claude/
+
+# Design assets (not needed in repo)
+ChatGPT*.png
+pomodoro_icon.jpg
