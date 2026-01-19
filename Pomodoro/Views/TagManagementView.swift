@@ -111,16 +111,16 @@ struct AddEditTagView: View {
     @State private var selectedColor: Color = .pomodoroRed
 
     private let colorOptions: [(name: String, color: Color)] = [
-        ("Red", Color(hex: "FF6B6B")!),
-        ("Coral", Color(hex: "FF8A80")!),
-        ("Orange", Color(hex: "FFAB40")!),
-        ("Yellow", Color(hex: "FFEAA7")!),
-        ("Green", Color(hex: "96CEB4")!),
-        ("Teal", Color(hex: "4ECDC4")!),
-        ("Blue", Color(hex: "45B7D1")!),
-        ("Purple", Color(hex: "DDA0DD")!),
-        ("Pink", Color(hex: "F8BBD9")!),
-        ("Gray", Color(hex: "95A5A6")!)
+        ("Red", Color(hex: "FF6B6B") ?? .red),
+        ("Coral", Color(hex: "FF8A80") ?? .red),
+        ("Orange", Color(hex: "FFAB40") ?? .orange),
+        ("Yellow", Color(hex: "FFEAA7") ?? .yellow),
+        ("Green", Color(hex: "96CEB4") ?? .green),
+        ("Teal", Color(hex: "4ECDC4") ?? .teal),
+        ("Blue", Color(hex: "45B7D1") ?? .blue),
+        ("Purple", Color(hex: "DDA0DD") ?? .purple),
+        ("Pink", Color(hex: "F8BBD9") ?? .pink),
+        ("Gray", Color(hex: "95A5A6") ?? .gray)
     ]
 
     var body: some View {

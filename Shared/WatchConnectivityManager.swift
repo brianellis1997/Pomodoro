@@ -76,22 +76,16 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
             #if os(iOS)
             if session.isReachable {
-                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
-                    print("Error sending message: \(error)")
-                })
+                session.sendMessage(message, replyHandler: nil, errorHandler: { _ in })
             } else {
                 try session.updateApplicationContext(message)
             }
             #else
             if session.isReachable {
-                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
-                    print("Error sending message: \(error)")
-                })
+                session.sendMessage(message, replyHandler: nil, errorHandler: { _ in })
             }
             #endif
-        } catch {
-            print("Error encoding routines: \(error)")
-        }
+        } catch { }
     }
 
     func sendTimerState(
@@ -127,16 +121,12 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             let message = ["timerStateSync": data]
 
             if session.isReachable {
-                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
-                    print("Error sending timer state: \(error)")
-                })
+                session.sendMessage(message, replyHandler: nil, errorHandler: { _ in })
             }
             #if os(iOS)
             try session.updateApplicationContext(message)
             #endif
-        } catch {
-            print("Error encoding timer state: \(error)")
-        }
+        } catch { }
     }
 
     func sendSettings(autoStartBreaks: Bool, autoStartWork: Bool) {
@@ -152,15 +142,11 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             let message = ["settingsSync": data]
 
             if session.isReachable {
-                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
-                    print("Error sending settings: \(error)")
-                })
+                session.sendMessage(message, replyHandler: nil, errorHandler: { _ in })
             } else {
                 try session.updateApplicationContext(message)
             }
-        } catch {
-            print("Error encoding settings: \(error)")
-        }
+        } catch { }
     }
 
     func requestRoutines() {
@@ -177,15 +163,11 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             let message = ["sessionCompletion": data]
 
             if session.isReachable {
-                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
-                    print("Error sending session completion: \(error)")
-                })
+                session.sendMessage(message, replyHandler: nil, errorHandler: { _ in })
             } else {
                 try session.updateApplicationContext(message)
             }
-        } catch {
-            print("Error encoding session completion: \(error)")
-        }
+        } catch { }
     }
 
     func sendStatsUpdate(_ stats: StatsUpdate) {
@@ -196,15 +178,11 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             let message = ["statsUpdate": data]
 
             if session.isReachable {
-                session.sendMessage(message, replyHandler: nil, errorHandler: { error in
-                    print("Error sending stats update: \(error)")
-                })
+                session.sendMessage(message, replyHandler: nil, errorHandler: { _ in })
             } else {
                 try session.updateApplicationContext(message)
             }
-        } catch {
-            print("Error encoding stats update: \(error)")
-        }
+        } catch { }
     }
 
     func requestStats() {
@@ -263,9 +241,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     self.receivedRoutines = routines
                     NotificationCenter.default.post(name: .routinesReceived, object: routines)
                 }
-            } catch {
-                print("Error decoding routines: \(error)")
-            }
+            } catch { }
         }
 
         if message["requestRoutines"] != nil {
@@ -282,9 +258,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: .sessionCompletionReceived, object: session)
                 }
-            } catch {
-                print("Error decoding session completion: \(error)")
-            }
+            } catch { }
         }
 
         if let statsData = message["statsUpdate"] as? Data {
@@ -293,9 +267,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: .statsUpdateReceived, object: stats)
                 }
-            } catch {
-                print("Error decoding stats update: \(error)")
-            }
+            } catch { }
         }
 
         if message["requestStats"] != nil {
@@ -308,9 +280,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: .timerStateSyncReceived, object: timerState)
                 }
-            } catch {
-                print("Error decoding timer state sync: \(error)")
-            }
+            } catch { }
         }
 
         if let settingsData = message["settingsSync"] as? Data {
@@ -319,9 +289,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: .settingsSyncReceived, object: settings)
                 }
-            } catch {
-                print("Error decoding settings sync: \(error)")
-            }
+            } catch { }
         }
     }
 }

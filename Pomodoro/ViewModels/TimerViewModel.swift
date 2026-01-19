@@ -225,7 +225,8 @@ class TimerViewModel: ObservableObject {
 
     private func handlePhaseComplete(_ phase: TimerPhase) {
         cancelTimerNotification()
-        sendCompletionNotificationIfNeeded(for: phase)
+        lastCompletedPhase = phase
+        lastCompletedRound = engine.currentRound
     }
 
     private func sendCompletionNotificationIfNeeded(for phase: TimerPhase) {
