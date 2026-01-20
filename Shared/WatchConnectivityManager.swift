@@ -40,6 +40,7 @@ struct TimerStateTransfer: Codable {
     let workDuration: TimeInterval
     let shortBreakDuration: TimeInterval
     let longBreakDuration: TimeInterval
+    let roundsBeforeLongBreak: Int
 }
 
 struct SettingsTransfer: Codable {
@@ -98,7 +99,8 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         routineName: String,
         workDuration: TimeInterval = 25 * 60,
         shortBreakDuration: TimeInterval = 5 * 60,
-        longBreakDuration: TimeInterval = 20 * 60
+        longBreakDuration: TimeInterval = 20 * 60,
+        roundsBeforeLongBreak: Int = 4
     ) {
         guard let session = session, session.activationState == .activated else { return }
 
@@ -113,7 +115,8 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             timestamp: Date(),
             workDuration: workDuration,
             shortBreakDuration: shortBreakDuration,
-            longBreakDuration: longBreakDuration
+            longBreakDuration: longBreakDuration,
+            roundsBeforeLongBreak: roundsBeforeLongBreak
         )
 
         do {

@@ -207,7 +207,8 @@ struct WatchTimerView: View {
             routineName: currentRoutineName,
             workDuration: engine.workDuration,
             shortBreakDuration: engine.shortBreakDuration,
-            longBreakDuration: engine.longBreakDuration
+            longBreakDuration: engine.longBreakDuration,
+            roundsBeforeLongBreak: engine.roundsBeforeLongBreak
         )
     }
 
@@ -226,6 +227,7 @@ struct WatchTimerView: View {
         engine.workDuration = state.workDuration
         engine.shortBreakDuration = state.shortBreakDuration
         engine.longBreakDuration = state.longBreakDuration
+        engine.roundsBeforeLongBreak = state.roundsBeforeLongBreak
         currentRoutineName = state.routineName
 
         if state.isRunning {

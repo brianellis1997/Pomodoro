@@ -302,6 +302,9 @@ struct TimerTab: View {
             if oldPhase == .work && (newPhase == .shortBreak || newPhase == .longBreak) {
                 checkAndRecordSession()
             }
+            if newPhase == .work && (oldPhase == .shortBreak || oldPhase == .longBreak) && timerViewModel.isRunning {
+                sessionStartTime = Date()
+            }
         }
         .alert("Session Complete!", isPresented: $showCompletionAlert) {
             Button("Continue") { }

@@ -286,6 +286,7 @@ class TimerViewModel: ObservableObject {
         defaults?.set(engine.workDuration, forKey: "savedWorkDuration")
         defaults?.set(engine.shortBreakDuration, forKey: "savedShortBreakDuration")
         defaults?.set(engine.longBreakDuration, forKey: "savedLongBreakDuration")
+        defaults?.set(engine.roundsBeforeLongBreak, forKey: "savedRoundsBeforeLongBreak")
 
         if isRunning {
             let endTime = Date().addingTimeInterval(timeRemaining)
@@ -305,11 +306,6 @@ class TimerViewModel: ObservableObject {
         let endDate = Date(timeIntervalSince1970: savedEndTime)
         let now = Date()
 
-        guard endDate > now else {
-            clearSavedState()
-            return
-        }
-
         if let savedPhase = defaults?.string(forKey: "savedPhase"),
            let phase = TimerPhase(rawValue: savedPhase) {
             engine.phase = phase
@@ -321,10 +317,26 @@ class TimerViewModel: ObservableObject {
         engine.workDuration = defaults?.double(forKey: "savedWorkDuration") ?? 25 * 60
         engine.shortBreakDuration = defaults?.double(forKey: "savedShortBreakDuration") ?? 5 * 60
         engine.longBreakDuration = defaults?.double(forKey: "savedLongBreakDuration") ?? 20 * 60
+        engine.roundsBeforeLongBreak = defaults?.integer(forKey: "savedRoundsBeforeLongBreak") ?? 4
         currentRoutineName = defaults?.string(forKey: "savedRoutineName") ?? "Classic Pomodoro"
 
-        engine.timeRemaining = endDate.timeIntervalSince(now)
-        engine.start()
+        if endDate > now {
+            engine.timeRemaining = endDate.timeIntervalSince(now)
+            engine.start()
+        } else {
+            let completedPhase = engine.phase
+            engine.skip()
+            clearSavedState()
+
+            let shouldAutoStart = (completedPhase == .work && engine.autoStartBreaks) ||
+                                  ((completedPhase == .shortBreak || completedPhase == .longBreak) && engine.autoStartWork)
+
+            if shouldAutoStart {
+                engine.start()
+                scheduleTimerNotification()
+                syncLiveActivity()
+            }
+        }
     }
 
     private func clearSavedState() {
@@ -476,6 +488,7 @@ class TimerViewModel: ObservableObject {
         engine.workDuration = state.workDuration
         engine.shortBreakDuration = state.shortBreakDuration
         engine.longBreakDuration = state.longBreakDuration
+        engine.roundsBeforeLongBreak = state.roundsBeforeLongBreak
         currentRoutineName = state.routineName
 
         if state.isRunning {
@@ -499,7 +512,8 @@ class TimerViewModel: ObservableObject {
             routineName: currentRoutineName,
             workDuration: engine.workDuration,
             shortBreakDuration: engine.shortBreakDuration,
-            longBreakDuration: engine.longBreakDuration
+            longBreakDuration: engine.longBreakDuration,
+            roundsBeforeLongBreak: engine.roundsBeforeLongBreak
         )
     }
 
