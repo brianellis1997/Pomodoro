@@ -14,6 +14,14 @@ class TimerViewModel: ObservableObject {
     @Published var focusModeViolationCount: Int = 0
     @Published var showCloseCallMessage: Bool = false
     @Published var violationBannerDismissed: Bool = false
+    @Published var sessionStartTime: Date?
+    @Published var pendingRestoredSession: RestoredSession?
+
+    struct RestoredSession {
+        let routineName: String
+        let durationMinutes: Int
+        let wasFullSession: Bool
+    }
 
     static let focusGracePeriod: TimeInterval = 5.0
 
@@ -223,6 +231,20 @@ class TimerViewModel: ObservableObject {
         violationBannerDismissed = false
     }
 
+    func setSessionStartTime(_ date: Date?) {
+        sessionStartTime = date
+        if let date = date {
+            defaults?.set(date.timeIntervalSince1970, forKey: "savedSessionStartTime")
+            defaults?.set(true, forKey: "savedWorkSessionPending")
+        } else {
+            defaults?.removeObject(forKey: "savedSessionStartTime")
+        }
+    }
+
+    func markSessionRecorded() {
+        defaults?.set(false, forKey: "savedWorkSessionPending")
+    }
+
     private func handlePhaseComplete(_ phase: TimerPhase) {
         cancelTimerNotification()
         lastCompletedPhase = phase
@@ -320,11 +342,28 @@ class TimerViewModel: ObservableObject {
         engine.roundsBeforeLongBreak = defaults?.integer(forKey: "savedRoundsBeforeLongBreak") ?? 4
         currentRoutineName = defaults?.string(forKey: "savedRoutineName") ?? "Classic Pomodoro"
 
+        if let savedStartTime = defaults?.double(forKey: "savedSessionStartTime"), savedStartTime > 0 {
+            sessionStartTime = Date(timeIntervalSince1970: savedStartTime)
+        }
+
         if endDate > now {
             engine.timeRemaining = endDate.timeIntervalSince(now)
             engine.start()
         } else {
             let completedPhase = engine.phase
+
+            if completedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
+                let workMinutes = Int(engine.workDuration / 60)
+                pendingRestoredSession = RestoredSession(
+                    routineName: currentRoutineName,
+                    durationMinutes: workMinutes,
+                    wasFullSession: true
+                )
+                defaults?.set(false, forKey: "savedWorkSessionPending")
+                sessionStartTime = nil
+                defaults?.removeObject(forKey: "savedSessionStartTime")
+            }
+
             engine.skip()
             clearSavedState()
 
@@ -413,6 +452,8 @@ class TimerViewModel: ObservableObject {
         sendTimerStateToWatch()
         lastCompletedPhase = nil
         lastCompletedRound = 0
+        setSessionStartTime(nil)
+        markSessionRecorded()
     }
 
     func skip() {

@@ -75,6 +75,14 @@ struct MainTabView: View {
         .onAppear {
             statsService.setModelContext(modelContext)
             routineSyncService.setModelContext(modelContext)
+            if let restored = timerViewModel.pendingRestoredSession {
+                statsService.recordSession(
+                    routineName: restored.routineName,
+                    durationMinutes: restored.durationMinutes,
+                    wasFullSession: restored.wasFullSession
+                )
+                timerViewModel.pendingRestoredSession = nil
+            }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active {
@@ -154,7 +162,6 @@ struct TimerTab: View {
     @Query private var settingsArray: [AppSettings]
     @Query private var availableTags: [SessionTag]
 
-    @State private var sessionStartTime: Date?
     @State private var showCompletionSheet = false
     @State private var showCompletionAlert = false
     @State private var earnedPoints = 0
@@ -294,8 +301,8 @@ struct TimerTab: View {
         .animation(.easeInOut(duration: 0.3), value: timerViewModel.sessionFailed)
         .animation(.easeInOut(duration: 0.3), value: timerViewModel.violationBannerDismissed)
         .onChange(of: timerViewModel.state) { oldState, newState in
-            if oldState == .idle && newState == .running {
-                sessionStartTime = Date()
+            if oldState == .idle && newState == .running && timerViewModel.phase == .work {
+                timerViewModel.setSessionStartTime(Date())
             }
         }
         .onChange(of: timerViewModel.phase) { oldPhase, newPhase in
@@ -303,7 +310,7 @@ struct TimerTab: View {
                 checkAndRecordSession()
             }
             if newPhase == .work && (oldPhase == .shortBreak || oldPhase == .longBreak) && timerViewModel.isRunning {
-                sessionStartTime = Date()
+                timerViewModel.setSessionStartTime(Date())
             }
         }
         .alert("Session Complete!", isPresented: $showCompletionAlert) {
@@ -365,7 +372,7 @@ struct TimerTab: View {
         let workDurationSeconds = timerViewModel.engine.workDuration
         let workDurationMinutes = Int(workDurationSeconds / 60)
 
-        guard let startTime = sessionStartTime else {
+        guard let startTime = timerViewModel.sessionStartTime else {
             return
         }
 
@@ -399,7 +406,7 @@ struct TimerTab: View {
         }
 
         timerViewModel.resetFocusModeViolation()
-        sessionStartTime = nil
+        timerViewModel.setSessionStartTime(nil)
     }
 
     private func recordSessionWithTags(_ tags: [String]) {
@@ -414,6 +421,7 @@ struct TimerTab: View {
             tags: tags
         )
 
+        timerViewModel.markSessionRecorded()
         pendingSessionData = nil
         showCompletionAlert = true
     }
