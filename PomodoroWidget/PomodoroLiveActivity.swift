@@ -20,10 +20,18 @@ struct PomodoroLiveActivity: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.timeString)
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(phaseColor(context.state.phase))
+                    if context.state.isRunning {
+                        Text(timerInterval: Date.now...context.state.targetEndDate, countsDown: true)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(phaseColor(context.state.phase))
+                            .multilineTextAlignment(.trailing)
+                    } else {
+                        Text(context.state.timeString)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(phaseColor(context.state.phase))
+                    }
                 }
 
                 DynamicIslandExpandedRegion(.center) {
@@ -40,10 +48,18 @@ struct PomodoroLiveActivity: Widget {
             } compactLeading: {
                 Text(context.state.phaseEmoji)
             } compactTrailing: {
-                Text(context.state.timeString)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundColor(phaseColor(context.state.phase))
+                if context.state.isRunning {
+                    Text(timerInterval: Date.now...context.state.targetEndDate, countsDown: true)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(phaseColor(context.state.phase))
+                        .frame(minWidth: 36)
+                } else {
+                    Text(context.state.timeString)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(phaseColor(context.state.phase))
+                }
             } minimal: {
                 ZStack {
                     Circle()
@@ -87,10 +103,17 @@ struct LockScreenView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(context.state.timeString)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundColor(.white)
+                if context.state.isRunning {
+                    Text(timerInterval: Date.now...context.state.targetEndDate, countsDown: true)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(.white)
+                } else {
+                    Text(context.state.timeString)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(.white)
+                }
 
                 HStack {
                     Text(context.state.phaseLabel)

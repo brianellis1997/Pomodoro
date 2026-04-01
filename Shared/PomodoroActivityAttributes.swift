@@ -10,6 +10,7 @@ struct PomodoroActivityAttributes: ActivityAttributes {
         var currentRound: Int
         var totalRounds: Int
         var isRunning: Bool
+        var targetEndDate: Date
 
         init(
             remainingTime: TimeInterval,
@@ -25,6 +26,7 @@ struct PomodoroActivityAttributes: ActivityAttributes {
             self.currentRound = currentRound
             self.totalRounds = totalRounds
             self.isRunning = isRunning
+            self.targetEndDate = isRunning ? Date().addingTimeInterval(remainingTime) : Date().addingTimeInterval(remainingTime)
         }
 
         var progress: Double {
