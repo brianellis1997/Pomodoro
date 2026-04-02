@@ -99,7 +99,14 @@ class TimerViewModel: ObservableObject {
     }
 
     func onAppBecameActive() {
-        engine.ensureRunning()
+        if engine.state == .running {
+            engine.ensureRunning()
+        } else if let savedEndTime = defaults?.double(forKey: "savedEndTime"),
+                  savedEndTime > 0,
+                  defaults?.bool(forKey: "savedIsRunning") == true {
+            restoreTimerState()
+        }
+
         if isRunning {
             liveActivityManager.forceStartActivity(
                 routineName: currentRoutineName,
@@ -350,9 +357,10 @@ class TimerViewModel: ObservableObject {
             engine.timeRemaining = endDate.timeIntervalSince(now)
             engine.start()
         } else {
-            let completedPhase = engine.phase
+            var overflowTime = now.timeIntervalSince(endDate)
+            let firstCompletedPhase = engine.phase
 
-            if completedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
+            if firstCompletedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
                 let workMinutes = Int(engine.workDuration / 60)
                 pendingRestoredSession = RestoredSession(
                     routineName: currentRoutineName,
@@ -365,12 +373,45 @@ class TimerViewModel: ObservableObject {
             }
 
             engine.skip()
+
+            var phasesAdvanced = 1
+            let maxChain = 20
+            while overflowTime > 0 && phasesAdvanced < maxChain {
+                let shouldAutoAdvance: Bool
+                let prevPhase = engine.phase
+                if prevPhase == .work {
+                    shouldAutoAdvance = engine.autoStartBreaks || (phasesAdvanced == 1 && firstCompletedPhase == .work && engine.autoStartBreaks)
+                } else {
+                    shouldAutoAdvance = engine.autoStartWork
+                }
+
+                let currentPhaseDuration: TimeInterval
+                switch engine.phase {
+                case .work: currentPhaseDuration = engine.workDuration
+                case .shortBreak: currentPhaseDuration = engine.shortBreakDuration
+                case .longBreak: currentPhaseDuration = engine.longBreakDuration
+                }
+
+                if !shouldAutoAdvance || overflowTime < currentPhaseDuration {
+                    break
+                }
+
+                overflowTime -= currentPhaseDuration
+                engine.skip()
+                phasesAdvanced += 1
+            }
+
             clearSavedState()
 
-            let shouldAutoStart = (completedPhase == .work && engine.autoStartBreaks) ||
-                                  ((completedPhase == .shortBreak || completedPhase == .longBreak) && engine.autoStartWork)
+            let currentPhase = engine.phase
+            let shouldAutoStart = (currentPhase == .shortBreak || currentPhase == .longBreak) ? engine.autoStartBreaks :
+                                  (currentPhase == .work ? engine.autoStartWork : false)
 
-            if shouldAutoStart {
+            let shouldStartFromOverflow = overflowTime > 0 && overflowTime < engine.totalTime
+            if shouldAutoStart || shouldStartFromOverflow {
+                if shouldStartFromOverflow {
+                    engine.timeRemaining = engine.totalTime - overflowTime
+                }
                 engine.start()
                 scheduleTimerNotification()
                 syncLiveActivity()
