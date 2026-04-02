@@ -35,7 +35,9 @@ struct PomodoroLiveActivity: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.center) {
-                    ProgressView(value: context.state.progress)
+                    let elapsed = max(0, Date.now.timeIntervalSince(context.state.phaseStartDate))
+                    let total = context.state.totalTime
+                    ProgressView(value: min(elapsed / max(total, 1), 1.0))
                         .progressViewStyle(.linear)
                         .tint(phaseColor(context.state.phase))
                 }
@@ -61,11 +63,13 @@ struct PomodoroLiveActivity: Widget {
                         .foregroundColor(phaseColor(context.state.phase))
                 }
             } minimal: {
+                let elapsed = max(0, Date.now.timeIntervalSince(context.state.phaseStartDate))
+                let total = context.state.totalTime
                 ZStack {
                     Circle()
                         .stroke(Color.gray.opacity(0.3), lineWidth: 2)
                     Circle()
-                        .trim(from: 0, to: context.state.progress)
+                        .trim(from: 0, to: min(elapsed / max(total, 1), 1.0))
                         .stroke(phaseColor(context.state.phase), lineWidth: 2)
                         .rotationEffect(.degrees(-90))
                 }
@@ -88,12 +92,16 @@ struct LockScreenView: View {
     var body: some View {
         HStack(spacing: 16) {
             ZStack {
+                let elapsed = max(0, Date.now.timeIntervalSince(context.state.phaseStartDate))
+                let total = context.state.totalTime
+                let ringProgress = min(elapsed / max(total, 1), 1.0)
+
                 Circle()
                     .stroke(Color.white.opacity(0.3), lineWidth: 6)
                     .frame(width: 60, height: 60)
 
                 Circle()
-                    .trim(from: 0, to: context.state.progress)
+                    .trim(from: 0, to: ringProgress)
                     .stroke(phaseColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .frame(width: 60, height: 60)

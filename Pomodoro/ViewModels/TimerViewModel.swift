@@ -378,11 +378,11 @@ class TimerViewModel: ObservableObject {
             let maxChain = 20
             while overflowTime > 0 && phasesAdvanced < maxChain {
                 let shouldAutoAdvance: Bool
-                let prevPhase = engine.phase
-                if prevPhase == .work {
-                    shouldAutoAdvance = engine.autoStartBreaks || (phasesAdvanced == 1 && firstCompletedPhase == .work && engine.autoStartBreaks)
-                } else {
+                let currentPhase = engine.phase
+                if currentPhase == .work {
                     shouldAutoAdvance = engine.autoStartWork
+                } else {
+                    shouldAutoAdvance = engine.autoStartBreaks
                 }
 
                 let currentPhaseDuration: TimeInterval
