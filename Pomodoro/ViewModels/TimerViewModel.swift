@@ -316,6 +316,8 @@ class TimerViewModel: ObservableObject {
         defaults?.set(engine.shortBreakDuration, forKey: "savedShortBreakDuration")
         defaults?.set(engine.longBreakDuration, forKey: "savedLongBreakDuration")
         defaults?.set(engine.roundsBeforeLongBreak, forKey: "savedRoundsBeforeLongBreak")
+        defaults?.set(engine.autoStartBreaks, forKey: "savedAutoStartBreaks")
+        defaults?.set(engine.autoStartWork, forKey: "savedAutoStartWork")
 
         if isRunning {
             let endTime = Date().addingTimeInterval(timeRemaining)
@@ -347,6 +349,8 @@ class TimerViewModel: ObservableObject {
         engine.shortBreakDuration = defaults?.double(forKey: "savedShortBreakDuration") ?? 5 * 60
         engine.longBreakDuration = defaults?.double(forKey: "savedLongBreakDuration") ?? 20 * 60
         engine.roundsBeforeLongBreak = defaults?.integer(forKey: "savedRoundsBeforeLongBreak") ?? 4
+        engine.autoStartBreaks = defaults?.bool(forKey: "savedAutoStartBreaks") ?? false
+        engine.autoStartWork = defaults?.bool(forKey: "savedAutoStartWork") ?? false
         currentRoutineName = defaults?.string(forKey: "savedRoutineName") ?? "Classic Pomodoro"
 
         if let savedStartTime = defaults?.double(forKey: "savedSessionStartTime"), savedStartTime > 0 {
@@ -413,6 +417,7 @@ class TimerViewModel: ObservableObject {
                     engine.timeRemaining = engine.totalTime - overflowTime
                 }
                 engine.start()
+                saveTimerState()
                 scheduleTimerNotification()
                 syncLiveActivity()
             }
