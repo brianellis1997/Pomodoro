@@ -143,6 +143,9 @@ class LiveActivityManager: ObservableObject {
         )
 
         if !isActivityActive && isRunning {
+            for activity in Activity<PomodoroActivityAttributes>.activities {
+                Task { await activity.end(nil, dismissalPolicy: .immediate) }
+            }
             currentActivity = nil
             startActivity(routineName: routineName, state: state)
         } else if isActivityActive {
