@@ -125,6 +125,8 @@ class TimerEngine: ObservableObject {
         let shouldAutoStart = (completedPhase == .work && autoStartBreaks) ||
                               ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
 
+        print("[TimerEngine] Phase \(completedPhase.rawValue) completed. autoStartBreaks=\(autoStartBreaks) autoStartWork=\(autoStartWork) shouldAutoStart=\(shouldAutoStart) nextPhase=\(phase.rawValue)")
+
         if shouldAutoStart {
             start()
             onAutoStart?()
