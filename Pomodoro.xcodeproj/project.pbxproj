@@ -66,6 +66,10 @@
 		F7D6CA92FED1E5FE082FE6EF /* PomodoroActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD4542D0C7308ECD4AFC277 /* PomodoroActivityAttributes.swift */; };
 		FB3C50C7B23212DB2BD9D4C5 /* TagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A29DA84739FA9BEC68F16D /* TagManagementView.swift */; };
 		FD7A894017122AB0A781745E /* RoutineConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2528E822064375A69069A2 /* RoutineConfiguration.swift */; };
+		FFFFAAAA000000000000B001 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
+		FFFFAAAA000000000000B002 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
+		FFFFAAAA000000000000B003 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
+		FFFFAAAA000000000000B004 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -163,6 +167,7 @@
 		B46A3686256E06800952A27A /* PomodoroWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroWatchApp.swift; sourceTree = "<group>"; };
 		BEA0F29A2A1F53DD7704B116 /* StudySession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySession.swift; sourceTree = "<group>"; };
 		C353FADFBAFFF3B678B2267E /* TimerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerEngine.swift; sourceTree = "<group>"; };
+		FFFFAAAA000000000000F001 /* SessionStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStep.swift; sourceTree = "<group>"; };
 		C9747E5F5B2F719CC6E09CD0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CAE4B90E98DC98D65F7EF466 /* PomodoroWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PomodoroWatch.entitlements; sourceTree = "<group>"; };
 		CC93B2BD5546E302DA8727FB /* WatchStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStatsView.swift; sourceTree = "<group>"; };
@@ -315,6 +320,7 @@
 				DBCFA3BAD7F341C63DEFD06D /* Colors.swift */,
 				AAD4542D0C7308ECD4AFC277 /* PomodoroActivityAttributes.swift */,
 				AD2528E822064375A69069A2 /* RoutineConfiguration.swift */,
+				FFFFAAAA000000000000F001 /* SessionStep.swift */,
 				C353FADFBAFFF3B678B2267E /* TimerEngine.swift */,
 				2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */,
 			);
@@ -511,6 +517,7 @@
 				39E815F241CFDC93EED6A89F /* PomodoroActivityAttributes.swift in Sources */,
 				482831126D0EDFD2AA8E4FEA /* PomodoroWatchWidget.swift in Sources */,
 				F7B5D592480BA491EC5E898E /* RoutineConfiguration.swift in Sources */,
+				FFFFAAAA000000000000B001 /* SessionStep.swift in Sources */,
 				7204255C7A77D739B62EC73A /* TimerEngine.swift in Sources */,
 				4B49298E2F9FCAD2F3E1F30B /* WatchConnectivityManager.swift in Sources */,
 			);
@@ -526,6 +533,7 @@
 				EBBFC7FBAFCB46CBCB53EA49 /* PomodoroWidget.swift in Sources */,
 				728F9A92897CA0EBDDA28F7C /* PomodoroWidgetBundle.swift in Sources */,
 				FD7A894017122AB0A781745E /* RoutineConfiguration.swift in Sources */,
+				FFFFAAAA000000000000B002 /* SessionStep.swift in Sources */,
 				4BB15B86A83E005E471D3648 /* TimerEngine.swift in Sources */,
 				270A725C4E3845688A52ACFB /* WatchConnectivityManager.swift in Sources */,
 				C5BFC4653D0E2AD2013947DE /* WidgetIntents.swift in Sources */,
@@ -540,6 +548,7 @@
 				71F7FFAAB17F838CEAC81E4A /* PomodoroActivityAttributes.swift in Sources */,
 				2776D25D4967D8F0F032F70C /* PomodoroWatchApp.swift in Sources */,
 				D789BE5656AE7A84A980E412 /* RoutineConfiguration.swift in Sources */,
+				FFFFAAAA000000000000B003 /* SessionStep.swift in Sources */,
 				39AFA0D8F92DA92FD2204BEA /* TimerEngine.swift in Sources */,
 				EC0DE55E5B93CEC6C470D00F /* WatchConnectivityManager.swift in Sources */,
 				59F76570A6D7ED343C10FA50 /* WatchStatsView.swift in Sources */,
@@ -568,6 +577,7 @@
 				CFEF0D0224CF65EC3FCFAB71 /* RoutineConfiguration.swift in Sources */,
 				46935FAABAB86C1F692C4D7F /* RoutineSyncService.swift in Sources */,
 				77661E592CB48B044BE3CC25 /* SessionTag.swift in Sources */,
+				FFFFAAAA000000000000B004 /* SessionStep.swift in Sources */,
 				49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */,
 				595FA4890D51A1F098025580 /* SpotifyService.swift in Sources */,
 				AB69F235315336AB18D62694 /* StatsService.swift in Sources */,

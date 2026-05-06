@@ -13,9 +13,12 @@ struct PomodoroLiveActivity: Widget {
                         Text(context.state.phaseLabel)
                             .font(.caption)
                             .foregroundColor(phaseColor(context.state.phase))
-                        Text("Round \(context.state.currentRound)/\(context.state.totalRounds)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        if context.state.stepCount > 0 {
+                            Text(context.state.stepCounterText)
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
 
@@ -128,13 +131,16 @@ struct LockScreenView: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(phaseColor)
+                        .lineLimit(1)
 
-                    Text("•")
-                        .foregroundColor(.white.opacity(0.6))
+                    if context.state.stepCount > 0 {
+                        Text("•")
+                            .foregroundColor(.white.opacity(0.6))
 
-                    Text("Round \(context.state.currentRound)/\(context.state.totalRounds)")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.7))
+                        Text(context.state.stepCounterText)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
                 }
             }
 
@@ -175,6 +181,9 @@ struct LockScreenView: View {
         phase: .work,
         currentRound: 2,
         totalRounds: 4,
-        isRunning: true
+        isRunning: true,
+        phaseLabel: "Focus",
+        stepIndex: 2,
+        stepCount: 8
     )
 }

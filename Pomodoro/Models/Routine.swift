@@ -12,6 +12,7 @@ final class Routine {
     var totalRounds: Int
     var isDefault: Bool
     var createdAt: Date
+    var sessionsData: Data?
 
     init(
         id: UUID = UUID(),
@@ -22,7 +23,8 @@ final class Routine {
         roundsBeforeLongBreak: Int = 4,
         totalRounds: Int = 4,
         isDefault: Bool = false,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        sessionsData: Data? = nil
     ) {
         self.id = id
         self.name = name
@@ -33,6 +35,7 @@ final class Routine {
         self.totalRounds = totalRounds
         self.isDefault = isDefault
         self.createdAt = createdAt
+        self.sessionsData = sessionsData
     }
 
     static var classicPomodoro: Routine {
@@ -69,6 +72,25 @@ final class Routine {
         )
     }
 
+    func resolvedSteps() -> [SessionStep] {
+        if let data = sessionsData,
+           let steps = try? JSONDecoder().decode([SessionStep].self, from: data),
+           !steps.isEmpty {
+            return steps
+        }
+        return [SessionStep].expandLegacy(
+            work: workDuration,
+            shortBreak: shortBreakDuration,
+            longBreak: longBreakDuration,
+            longBreakEvery: roundsBeforeLongBreak,
+            rounds: totalRounds
+        )
+    }
+
+    func setSteps(_ steps: [SessionStep]) {
+        sessionsData = (try? JSONEncoder().encode(steps))
+    }
+
     var configuration: RoutineConfiguration {
         RoutineConfiguration(
             name: name,
@@ -76,7 +98,8 @@ final class Routine {
             shortBreakDuration: shortBreakDuration,
             longBreakDuration: longBreakDuration,
             roundsBeforeLongBreak: roundsBeforeLongBreak,
-            totalRounds: totalRounds
+            totalRounds: totalRounds,
+            steps: resolvedSteps()
         )
     }
 }

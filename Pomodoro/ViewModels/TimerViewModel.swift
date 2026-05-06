@@ -43,6 +43,9 @@ class TimerViewModel: ObservableObject {
     var state: TimerState { engine.state }
     var currentRound: Int { engine.currentRound }
     var totalRounds: Int { engine.totalRounds }
+    var stepIndex: Int { engine.currentStepIndex }
+    var stepCount: Int { engine.stepCount }
+    var currentLabel: String { engine.currentLabel }
     var progress: Double { engine.progress }
     var formattedTime: String { engine.formattedTime }
     var phaseDisplayName: String { engine.phaseDisplayName }
@@ -72,13 +75,15 @@ class TimerViewModel: ObservableObject {
         engine.objectWillChange
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
-                self?.syncLiveActivity()
-                self?.syncWidgetData()
             }
             .store(in: &cancellables)
 
         engine.onPhaseComplete = { [weak self] completedPhase in
             self?.handlePhaseComplete(completedPhase)
+        }
+
+        engine.onPhaseAdvanced = { [weak self] in
+            self?.handlePhaseAdvanced()
         }
 
         engine.onAutoStart = { [weak self] in
@@ -89,6 +94,12 @@ class TimerViewModel: ObservableObject {
         syncWidgetData()
         checkPendingWidgetActions()
         requestNotificationPermission()
+    }
+
+    private func handlePhaseAdvanced() {
+        saveTimerState()
+        syncLiveActivity()
+        syncWidgetData()
     }
 
     private func handleAutoStart() {
@@ -115,7 +126,10 @@ class TimerViewModel: ObservableObject {
                 totalTime: totalTime,
                 phase: phase,
                 currentRound: currentRound,
-                totalRounds: totalRounds
+                totalRounds: totalRounds,
+                phaseLabel: currentLabel,
+                stepIndex: stepIndex,
+                stepCount: stepCount
             )
         }
         checkPendingWidgetActions()
@@ -319,6 +333,10 @@ class TimerViewModel: ObservableObject {
         defaults?.set(engine.roundsBeforeLongBreak, forKey: "savedRoundsBeforeLongBreak")
         defaults?.set(engine.autoStartBreaks, forKey: "savedAutoStartBreaks")
         defaults?.set(engine.autoStartWork, forKey: "savedAutoStartWork")
+        defaults?.set(engine.currentStepIndex, forKey: "savedStepIndex")
+        if let stepsData = try? JSONEncoder().encode(engine.steps) {
+            defaults?.set(stepsData, forKey: "savedStepsData")
+        }
 
         if isRunning {
             let endTime = Date().addingTimeInterval(timeRemaining)
@@ -338,14 +356,6 @@ class TimerViewModel: ObservableObject {
         let endDate = Date(timeIntervalSince1970: savedEndTime)
         let now = Date()
 
-        if let savedPhase = defaults?.string(forKey: "savedPhase"),
-           let phase = TimerPhase(rawValue: savedPhase) {
-            engine.phase = phase
-        }
-
-        engine.totalTime = defaults?.double(forKey: "savedTotalTime") ?? 25 * 60
-        engine.currentRound = defaults?.integer(forKey: "savedCurrentRound") ?? 1
-        engine.totalRounds = defaults?.integer(forKey: "savedTotalRounds") ?? 4
         engine.workDuration = defaults?.double(forKey: "savedWorkDuration") ?? 25 * 60
         engine.shortBreakDuration = defaults?.double(forKey: "savedShortBreakDuration") ?? 5 * 60
         engine.longBreakDuration = defaults?.double(forKey: "savedLongBreakDuration") ?? 20 * 60
@@ -353,6 +363,30 @@ class TimerViewModel: ObservableObject {
         engine.autoStartBreaks = defaults?.bool(forKey: "savedAutoStartBreaks") ?? false
         engine.autoStartWork = defaults?.bool(forKey: "savedAutoStartWork") ?? false
         currentRoutineName = defaults?.string(forKey: "savedRoutineName") ?? "Classic Pomodoro"
+
+        var restoredSteps: [SessionStep] = []
+        if let stepsData = defaults?.data(forKey: "savedStepsData"),
+           let decoded = try? JSONDecoder().decode([SessionStep].self, from: stepsData),
+           !decoded.isEmpty {
+            restoredSteps = decoded
+        } else {
+            restoredSteps = [SessionStep].expandLegacy(
+                work: Int(engine.workDuration / 60),
+                shortBreak: Int(engine.shortBreakDuration / 60),
+                longBreak: Int(engine.longBreakDuration / 60),
+                longBreakEvery: engine.roundsBeforeLongBreak,
+                rounds: max(1, defaults?.integer(forKey: "savedTotalRounds") ?? 4)
+            )
+        }
+
+        let restoredIndex = defaults?.integer(forKey: "savedStepIndex") ?? 0
+        engine.loadSteps(restoredSteps, stepIndex: restoredIndex)
+
+        if let savedPhase = defaults?.string(forKey: "savedPhase"),
+           let phase = TimerPhase(rawValue: savedPhase) {
+            engine.phase = phase
+        }
+        engine.totalTime = defaults?.double(forKey: "savedTotalTime") ?? engine.currentStepDuration()
 
         if let savedStartTime = defaults?.double(forKey: "savedSessionStartTime"), savedStartTime > 0 {
             sessionStartTime = Date(timeIntervalSince1970: savedStartTime)
@@ -366,7 +400,7 @@ class TimerViewModel: ObservableObject {
             let firstCompletedPhase = engine.phase
 
             if firstCompletedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
-                let workMinutes = Int(engine.workDuration / 60)
+                let workMinutes = Int(engine.currentStepDuration() / 60)
                 pendingRestoredSession = RestoredSession(
                     routineName: currentRoutineName,
                     durationMinutes: workMinutes,
@@ -390,12 +424,7 @@ class TimerViewModel: ObservableObject {
                     shouldAutoAdvance = engine.autoStartBreaks
                 }
 
-                let currentPhaseDuration: TimeInterval
-                switch engine.phase {
-                case .work: currentPhaseDuration = engine.workDuration
-                case .shortBreak: currentPhaseDuration = engine.shortBreakDuration
-                case .longBreak: currentPhaseDuration = engine.longBreakDuration
-                }
+                let currentPhaseDuration = engine.currentStepDuration()
 
                 if !shouldAutoAdvance || overflowTime < currentPhaseDuration {
                     break
@@ -529,7 +558,10 @@ class TimerViewModel: ObservableObject {
             currentRound: currentRound,
             totalRounds: totalRounds,
             isRunning: isRunning,
-            routineName: currentRoutineName
+            routineName: currentRoutineName,
+            phaseLabel: currentLabel,
+            stepIndex: stepIndex,
+            stepCount: stepCount
         )
     }
 
@@ -542,6 +574,9 @@ class TimerViewModel: ObservableObject {
         defaults?.set(totalRounds, forKey: "totalRounds")
         defaults?.set(isRunning, forKey: "isRunning")
         defaults?.set(currentRoutineName, forKey: "routineName")
+        defaults?.set(currentLabel, forKey: "phaseLabel")
+        defaults?.set(stepIndex, forKey: "stepIndex")
+        defaults?.set(stepCount, forKey: "stepCount")
 
         if isRunning {
             let endTime = Date().addingTimeInterval(timeRemaining)
@@ -568,15 +603,18 @@ class TimerViewModel: ObservableObject {
             sendCompletionNotificationIfNeeded(for: previousPhase)
         }
 
-        engine.phase = newPhase
-        engine.timeRemaining = state.timeRemaining
-        engine.totalTime = state.totalTime
-        engine.currentRound = state.currentRound
-        engine.totalRounds = state.totalRounds
         engine.workDuration = state.workDuration
         engine.shortBreakDuration = state.shortBreakDuration
         engine.longBreakDuration = state.longBreakDuration
         engine.roundsBeforeLongBreak = state.roundsBeforeLongBreak
+
+        if let receivedSteps = state.steps, !receivedSteps.isEmpty {
+            engine.loadSteps(receivedSteps, stepIndex: state.stepIndex ?? 0)
+        }
+
+        engine.phase = newPhase
+        engine.timeRemaining = state.timeRemaining
+        engine.totalTime = state.totalTime
         currentRoutineName = state.routineName
 
         if state.isRunning {
@@ -601,7 +639,10 @@ class TimerViewModel: ObservableObject {
             workDuration: engine.workDuration,
             shortBreakDuration: engine.shortBreakDuration,
             longBreakDuration: engine.longBreakDuration,
-            roundsBeforeLongBreak: engine.roundsBeforeLongBreak
+            roundsBeforeLongBreak: engine.roundsBeforeLongBreak,
+            steps: engine.steps,
+            stepIndex: engine.currentStepIndex,
+            phaseLabel: currentLabel
         )
     }
 

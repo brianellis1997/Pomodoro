@@ -62,6 +62,7 @@ struct WatchPomodoroProvider: TimelineProvider {
         let storedCurrentRound = defaults?.integer(forKey: "currentRound")
         let storedTotalRounds = defaults?.integer(forKey: "totalRounds")
         let isRunning = defaults?.bool(forKey: "isRunning") ?? false
+        let storedPhaseLabel = defaults?.string(forKey: "phaseLabel")
 
         let totalTime = storedTotalTime > 0 ? storedTotalTime : 25 * 60
         let currentRound = (storedCurrentRound ?? 0) > 0 ? storedCurrentRound! : 1
@@ -90,7 +91,8 @@ struct WatchPomodoroProvider: TimelineProvider {
             currentRound: currentRound,
             totalRounds: totalRounds,
             isRunning: isRunning,
-            endTime: endTime
+            endTime: endTime,
+            customPhaseLabel: storedPhaseLabel
         )
     }
 }
@@ -104,6 +106,7 @@ struct WatchPomodoroEntry: TimelineEntry {
     let totalRounds: Int
     let isRunning: Bool
     let endTime: Date?
+    var customPhaseLabel: String? = nil
 
     var progress: Double {
         guard totalTime > 0 else { return 1 }
@@ -135,6 +138,7 @@ struct WatchPomodoroEntry: TimelineEntry {
     }
 
     var phaseLabel: String {
+        if let custom = customPhaseLabel, !custom.isEmpty { return custom }
         switch phase {
         case .work: return "Focus"
         case .shortBreak: return "Break"
@@ -143,6 +147,7 @@ struct WatchPomodoroEntry: TimelineEntry {
     }
 
     var shortPhaseLabel: String {
+        if let custom = customPhaseLabel, !custom.isEmpty { return custom }
         switch phase {
         case .work: return "Focus"
         case .shortBreak: return "Break"

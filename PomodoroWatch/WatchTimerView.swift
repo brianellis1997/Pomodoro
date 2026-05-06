@@ -32,10 +32,11 @@ struct WatchTimerView: View {
                 }
                 .buttonStyle(.plain)
 
-                Text(engine.phaseDisplayName)
+                Text(engine.currentLabel)
                     .font(.caption2)
                     .foregroundColor(phaseColor)
                     .textCase(.uppercase)
+                    .lineLimit(1)
 
                 VStack(spacing: 4) {
                     Text(engine.formattedTime)
@@ -43,9 +44,11 @@ struct WatchTimerView: View {
                         .monospacedDigit()
                         .foregroundColor(phaseColor)
 
-                    Text("Round \(engine.currentRound)/\(engine.totalRounds)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    if engine.stepCount > 0 {
+                        Text("Step \(engine.currentStepIndex + 1) of \(engine.stepCount)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 .padding(.vertical, 8)
 
@@ -208,7 +211,10 @@ struct WatchTimerView: View {
             workDuration: engine.workDuration,
             shortBreakDuration: engine.shortBreakDuration,
             longBreakDuration: engine.longBreakDuration,
-            roundsBeforeLongBreak: engine.roundsBeforeLongBreak
+            roundsBeforeLongBreak: engine.roundsBeforeLongBreak,
+            steps: engine.steps,
+            stepIndex: engine.currentStepIndex,
+            phaseLabel: engine.currentLabel
         )
     }
 
@@ -219,15 +225,18 @@ struct WatchTimerView: View {
             engine.pause()
         }
 
-        engine.phase = phase
-        engine.timeRemaining = state.timeRemaining
-        engine.totalTime = state.totalTime
-        engine.currentRound = state.currentRound
-        engine.totalRounds = state.totalRounds
         engine.workDuration = state.workDuration
         engine.shortBreakDuration = state.shortBreakDuration
         engine.longBreakDuration = state.longBreakDuration
         engine.roundsBeforeLongBreak = state.roundsBeforeLongBreak
+
+        if let receivedSteps = state.steps, !receivedSteps.isEmpty {
+            engine.loadSteps(receivedSteps, stepIndex: state.stepIndex ?? 0)
+        }
+
+        engine.phase = phase
+        engine.timeRemaining = state.timeRemaining
+        engine.totalTime = state.totalTime
         currentRoutineName = state.routineName
 
         if state.isRunning {
@@ -285,7 +294,8 @@ struct WatchRoutinePickerView: View {
                                 shortBreakDuration: routine.shortBreakDuration,
                                 longBreakDuration: routine.longBreakDuration,
                                 roundsBeforeLongBreak: routine.roundsBeforeLongBreak,
-                                totalRounds: routine.totalRounds
+                                totalRounds: routine.totalRounds,
+                                steps: routine.steps ?? []
                             )
                             engine.configure(routine: config)
                             dismiss()
@@ -294,7 +304,7 @@ struct WatchRoutinePickerView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(routine.name)
                                         .font(.caption)
-                                    Text("\(routine.workDuration)m / \(routine.shortBreakDuration)m")
+                                    Text("\(routine.steps?.count ?? routine.totalRounds) steps")
                                         .font(.caption2)
                                         .foregroundColor(.secondary)
                                 }

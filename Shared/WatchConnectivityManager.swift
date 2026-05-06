@@ -10,6 +10,7 @@ struct RoutineTransfer: Codable {
     let longBreakDuration: Int
     let roundsBeforeLongBreak: Int
     let totalRounds: Int
+    var steps: [SessionStep]?
 }
 
 struct SessionCompletion: Codable {
@@ -41,6 +42,9 @@ struct TimerStateTransfer: Codable {
     let shortBreakDuration: TimeInterval
     let longBreakDuration: TimeInterval
     let roundsBeforeLongBreak: Int
+    var steps: [SessionStep]?
+    var stepIndex: Int?
+    var phaseLabel: String?
 }
 
 struct SettingsTransfer: Codable {
@@ -100,7 +104,10 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         workDuration: TimeInterval = 25 * 60,
         shortBreakDuration: TimeInterval = 5 * 60,
         longBreakDuration: TimeInterval = 20 * 60,
-        roundsBeforeLongBreak: Int = 4
+        roundsBeforeLongBreak: Int = 4,
+        steps: [SessionStep]? = nil,
+        stepIndex: Int? = nil,
+        phaseLabel: String? = nil
     ) {
         guard let session = session, session.activationState == .activated else { return }
 
@@ -116,7 +123,10 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             workDuration: workDuration,
             shortBreakDuration: shortBreakDuration,
             longBreakDuration: longBreakDuration,
-            roundsBeforeLongBreak: roundsBeforeLongBreak
+            roundsBeforeLongBreak: roundsBeforeLongBreak,
+            steps: steps,
+            stepIndex: stepIndex,
+            phaseLabel: phaseLabel
         )
 
         do {

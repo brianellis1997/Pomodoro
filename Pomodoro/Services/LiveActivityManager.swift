@@ -83,6 +83,9 @@ class LiveActivityManager: ObservableObject {
         appGroupDefaults?.set(state.totalRounds, forKey: "totalRounds")
         appGroupDefaults?.set(state.isRunning, forKey: "isRunning")
         appGroupDefaults?.set(routineName, forKey: "routineName")
+        appGroupDefaults?.set(state.phaseLabel, forKey: "phaseLabel")
+        appGroupDefaults?.set(state.stepIndex, forKey: "stepIndex")
+        appGroupDefaults?.set(state.stepCount, forKey: "stepCount")
 
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -95,6 +98,9 @@ class LiveActivityManager: ObservableObject {
         appGroupDefaults?.removeObject(forKey: "totalRounds")
         appGroupDefaults?.removeObject(forKey: "isRunning")
         appGroupDefaults?.removeObject(forKey: "routineName")
+        appGroupDefaults?.removeObject(forKey: "phaseLabel")
+        appGroupDefaults?.removeObject(forKey: "stepIndex")
+        appGroupDefaults?.removeObject(forKey: "stepCount")
 
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -105,7 +111,10 @@ class LiveActivityManager: ObservableObject {
         totalTime: TimeInterval,
         phase: TimerPhase,
         currentRound: Int,
-        totalRounds: Int
+        totalRounds: Int,
+        phaseLabel: String? = nil,
+        stepIndex: Int = 0,
+        stepCount: Int = 0
     ) {
         let state = PomodoroActivityAttributes.ContentState(
             remainingTime: timeRemaining,
@@ -113,7 +122,10 @@ class LiveActivityManager: ObservableObject {
             phase: phase,
             currentRound: currentRound,
             totalRounds: totalRounds,
-            isRunning: true
+            isRunning: true,
+            phaseLabel: phaseLabel,
+            stepIndex: stepIndex,
+            stepCount: stepCount
         )
 
         if !isActivityActive {
@@ -131,7 +143,10 @@ class LiveActivityManager: ObservableObject {
         currentRound: Int,
         totalRounds: Int,
         isRunning: Bool,
-        routineName: String
+        routineName: String,
+        phaseLabel: String? = nil,
+        stepIndex: Int = 0,
+        stepCount: Int = 0
     ) {
         let state = PomodoroActivityAttributes.ContentState(
             remainingTime: timeRemaining,
@@ -139,7 +154,10 @@ class LiveActivityManager: ObservableObject {
             phase: phase,
             currentRound: currentRound,
             totalRounds: totalRounds,
-            isRunning: isRunning
+            isRunning: isRunning,
+            phaseLabel: phaseLabel,
+            stepIndex: stepIndex,
+            stepCount: stepCount
         )
 
         if !isActivityActive && isRunning {

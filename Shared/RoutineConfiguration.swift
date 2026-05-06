@@ -7,6 +7,7 @@ struct RoutineConfiguration: Codable, Equatable, Hashable {
     var longBreakDuration: Int
     var roundsBeforeLongBreak: Int
     var totalRounds: Int
+    var steps: [SessionStep]
 
     init(
         name: String = "Classic Pomodoro",
@@ -14,7 +15,8 @@ struct RoutineConfiguration: Codable, Equatable, Hashable {
         shortBreakDuration: Int = 5,
         longBreakDuration: Int = 20,
         roundsBeforeLongBreak: Int = 4,
-        totalRounds: Int = 4
+        totalRounds: Int = 4,
+        steps: [SessionStep] = []
     ) {
         self.name = name
         self.workDuration = workDuration
@@ -22,6 +24,43 @@ struct RoutineConfiguration: Codable, Equatable, Hashable {
         self.longBreakDuration = longBreakDuration
         self.roundsBeforeLongBreak = roundsBeforeLongBreak
         self.totalRounds = totalRounds
+        if steps.isEmpty {
+            self.steps = [SessionStep].expandLegacy(
+                work: workDuration,
+                shortBreak: shortBreakDuration,
+                longBreak: longBreakDuration,
+                longBreakEvery: roundsBeforeLongBreak,
+                rounds: totalRounds
+            )
+        } else {
+            self.steps = steps
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, workDuration, shortBreakDuration, longBreakDuration
+        case roundsBeforeLongBreak, totalRounds, steps
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let name = try container.decode(String.self, forKey: .name)
+        let work = try container.decode(Int.self, forKey: .workDuration)
+        let shortBreak = try container.decode(Int.self, forKey: .shortBreakDuration)
+        let longBreak = try container.decode(Int.self, forKey: .longBreakDuration)
+        let longBreakEvery = try container.decode(Int.self, forKey: .roundsBeforeLongBreak)
+        let rounds = try container.decode(Int.self, forKey: .totalRounds)
+        let decodedSteps = try container.decodeIfPresent([SessionStep].self, forKey: .steps) ?? []
+
+        self.init(
+            name: name,
+            workDuration: work,
+            shortBreakDuration: shortBreak,
+            longBreakDuration: longBreak,
+            roundsBeforeLongBreak: longBreakEvery,
+            totalRounds: rounds,
+            steps: decodedSteps
+        )
     }
 
     static let classicPomodoro = RoutineConfiguration()

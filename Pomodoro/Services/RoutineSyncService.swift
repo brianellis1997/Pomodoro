@@ -37,7 +37,8 @@ class RoutineSyncService: ObservableObject {
                     shortBreakDuration: routine.shortBreakDuration,
                     longBreakDuration: routine.longBreakDuration,
                     roundsBeforeLongBreak: routine.roundsBeforeLongBreak,
-                    totalRounds: routine.totalRounds
+                    totalRounds: routine.totalRounds,
+                    steps: routine.resolvedSteps()
                 )
             }
             connectivityManager.sendRoutines(transfers)

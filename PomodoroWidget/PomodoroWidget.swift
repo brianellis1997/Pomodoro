@@ -12,7 +12,10 @@ struct PomodoroProvider: TimelineProvider {
             currentRound: 1,
             totalRounds: 4,
             isRunning: false,
-            routineName: "Classic Pomodoro"
+            routineName: "Classic Pomodoro",
+            phaseLabel: "Focus",
+            stepIndex: 0,
+            stepCount: 8
         )
     }
 
@@ -64,6 +67,9 @@ struct PomodoroProvider: TimelineProvider {
         let storedTotalRounds = defaults?.integer(forKey: "totalRounds")
         let isRunning = defaults?.bool(forKey: "isRunning") ?? false
         let routineName = defaults?.string(forKey: "routineName") ?? "Classic Pomodoro"
+        let storedPhaseLabel = defaults?.string(forKey: "phaseLabel")
+        let storedStepIndex = defaults?.integer(forKey: "stepIndex") ?? 0
+        let storedStepCount = defaults?.integer(forKey: "stepCount") ?? 0
 
         let totalTime = storedTotalTime > 0 ? storedTotalTime : 25 * 60
         let currentRound = (storedCurrentRound ?? 0) > 0 ? storedCurrentRound! : 1
@@ -92,7 +98,10 @@ struct PomodoroProvider: TimelineProvider {
             currentRound: currentRound,
             totalRounds: totalRounds,
             isRunning: isRunning,
-            routineName: routineName
+            routineName: routineName,
+            phaseLabel: storedPhaseLabel,
+            stepIndex: storedStepIndex,
+            stepCount: storedStepCount
         )
     }
 }
@@ -106,6 +115,35 @@ struct PomodoroEntry: TimelineEntry {
     let totalRounds: Int
     let isRunning: Bool
     let routineName: String
+    let storedPhaseLabel: String?
+    let stepIndex: Int
+    let stepCount: Int
+
+    init(
+        date: Date,
+        remainingTime: TimeInterval,
+        totalTime: TimeInterval,
+        phase: TimerPhase,
+        currentRound: Int,
+        totalRounds: Int,
+        isRunning: Bool,
+        routineName: String,
+        phaseLabel: String? = nil,
+        stepIndex: Int = 0,
+        stepCount: Int = 0
+    ) {
+        self.date = date
+        self.remainingTime = remainingTime
+        self.totalTime = totalTime
+        self.phase = phase
+        self.currentRound = currentRound
+        self.totalRounds = totalRounds
+        self.isRunning = isRunning
+        self.routineName = routineName
+        self.storedPhaseLabel = phaseLabel
+        self.stepIndex = stepIndex
+        self.stepCount = stepCount
+    }
 
     var progress: Double {
         guard totalTime > 0 else { return 1 }
@@ -127,11 +165,19 @@ struct PomodoroEntry: TimelineEntry {
     }
 
     var phaseLabel: String {
+        if let storedPhaseLabel = storedPhaseLabel, !storedPhaseLabel.isEmpty {
+            return storedPhaseLabel
+        }
         switch phase {
         case .work: return "Focus"
         case .shortBreak: return "Break"
         case .longBreak: return "Long Break"
         }
+    }
+
+    var stepCounterText: String {
+        guard stepCount > 0 else { return "Round \(currentRound)/\(totalRounds)" }
+        return "Step \(stepIndex + 1) of \(stepCount)"
     }
 }
 
@@ -175,13 +221,10 @@ struct PomodoroWidgetEntryView: View {
             }
             .frame(width: 80, height: 80)
 
-            HStack(spacing: 4) {
-                ForEach(0..<entry.totalRounds, id: \.self) { index in
-                    Circle()
-                        .fill(index < entry.currentRound ? entry.phaseColor : Color.gray.opacity(0.3))
-                        .frame(width: 6, height: 6)
-                }
-            }
+            Text(entry.stepCounterText)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
         }
         .containerBackground(for: .widget) {
             Color.backgroundPrimary
@@ -214,10 +257,12 @@ struct PomodoroWidgetEntryView: View {
                 Text(entry.phaseLabel)
                     .font(.caption)
                     .foregroundColor(entry.phaseColor)
+                    .lineLimit(1)
 
-                Text("Round \(entry.currentRound)/\(entry.totalRounds)")
+                Text(entry.stepCounterText)
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                    .lineLimit(1)
 
                 Spacer()
             }
@@ -275,13 +320,10 @@ struct PomodoroWidgetEntryView: View {
             }
             .frame(width: 160, height: 160)
 
-            HStack(spacing: 8) {
-                ForEach(0..<entry.totalRounds, id: \.self) { index in
-                    Circle()
-                        .fill(index < entry.currentRound ? entry.phaseColor : Color.gray.opacity(0.3))
-                        .frame(width: 10, height: 10)
-                }
-            }
+            Text(entry.stepCounterText)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
 
             HStack(spacing: 24) {
                 Button(intent: ResetTimerIntent()) {
@@ -345,7 +387,10 @@ struct PomodoroWidget: Widget {
         currentRound: 2,
         totalRounds: 4,
         isRunning: true,
-        routineName: "Classic Pomodoro"
+        routineName: "Classic Pomodoro",
+        phaseLabel: "Focus",
+        stepIndex: 2,
+        stepCount: 8
     )
 }
 
@@ -360,6 +405,9 @@ struct PomodoroWidget: Widget {
         currentRound: 2,
         totalRounds: 4,
         isRunning: true,
-        routineName: "Deep Work Session"
+        routineName: "Deep Work Session",
+        phaseLabel: "Spanish",
+        stepIndex: 3,
+        stepCount: 14
     )
 }

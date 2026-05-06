@@ -19,8 +19,8 @@ class TimerEngine: ObservableObject {
     @Published var totalTime: TimeInterval = 0
     @Published var phase: TimerPhase = .work
     @Published var state: TimerState = .idle
-    @Published var currentRound: Int = 1
-    @Published var totalRounds: Int = 4
+    @Published var steps: [SessionStep] = []
+    @Published var currentStepIndex: Int = 0
 
     private var timer: Timer?
     private var endDate: Date?
@@ -33,7 +33,28 @@ class TimerEngine: ObservableObject {
     var autoStartBreaks: Bool = false
     var autoStartWork: Bool = false
     var onPhaseComplete: ((TimerPhase) -> Void)?
+    var onPhaseAdvanced: (() -> Void)?
     var onAutoStart: (() -> Void)?
+
+    var currentRound: Int {
+        guard !steps.isEmpty else { return 1 }
+        let upperBound = min(currentStepIndex, steps.count - 1)
+        var focusCount = 0
+        for i in 0...upperBound {
+            if steps[i].kind == .focus { focusCount += 1 }
+        }
+        return max(1, focusCount)
+    }
+
+    var totalRounds: Int {
+        max(1, steps.filter { $0.kind == .focus }.count)
+    }
+
+    var stepCount: Int { steps.count }
+
+    var currentLabel: String {
+        steps.displayLabel(at: currentStepIndex)
+    }
 
     var progress: Double {
         guard totalTime > 0 else { return 1 }
@@ -47,18 +68,15 @@ class TimerEngine: ObservableObject {
     }
 
     var phaseDisplayName: String {
-        switch phase {
-        case .work:
-            return "Focus"
-        case .shortBreak:
-            return "Short Break"
-        case .longBreak:
-            return "Long Break"
-        }
+        currentLabel
     }
 
     init() {
-        resetToWork()
+        steps = [SessionStep].expandLegacy(
+            work: 25, shortBreak: 5, longBreak: 20,
+            longBreakEvery: 4, rounds: 4
+        )
+        applyCurrentStepToState()
     }
 
     func start() {
@@ -88,9 +106,8 @@ class TimerEngine: ObservableObject {
         timer = nil
         endDate = nil
         state = .idle
-        currentRound = 1
-        phase = .work
-        resetToWork()
+        currentStepIndex = 0
+        applyCurrentStepToState()
     }
 
     func skip() {
@@ -121,6 +138,7 @@ class TimerEngine: ObservableObject {
         onPhaseComplete?(completedPhase)
 
         advancePhase()
+        onPhaseAdvanced?()
 
         let shouldAutoStart = (completedPhase == .work && autoStartBreaks) ||
                               ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
@@ -144,36 +162,23 @@ class TimerEngine: ObservableObject {
     }
 
     private func advancePhase() {
-        switch phase {
-        case .work:
-            if currentRound % roundsBeforeLongBreak == 0 {
-                phase = .longBreak
-                totalTime = longBreakDuration
-            } else {
-                phase = .shortBreak
-                totalTime = shortBreakDuration
-            }
-        case .shortBreak:
-            currentRound += 1
-            phase = .work
-            totalTime = workDuration
-        case .longBreak:
-            if currentRound >= totalRounds {
-                currentRound = 1
-            } else {
-                currentRound += 1
-            }
-            phase = .work
-            totalTime = workDuration
-        }
-
-        timeRemaining = totalTime
+        guard !steps.isEmpty else { return }
+        currentStepIndex = (currentStepIndex + 1) % steps.count
+        applyCurrentStepToState()
     }
 
-    private func resetToWork() {
-        phase = .work
-        totalTime = workDuration
-        timeRemaining = workDuration
+    private func applyCurrentStepToState() {
+        guard !steps.isEmpty else {
+            phase = .work
+            totalTime = workDuration
+            timeRemaining = workDuration
+            return
+        }
+        let safeIndex = min(max(0, currentStepIndex), steps.count - 1)
+        let step = steps[safeIndex]
+        phase = step.kind.asPhase
+        totalTime = TimeInterval(step.durationMinutes * 60)
+        timeRemaining = totalTime
     }
 
     func configure(routine: RoutineConfiguration) {
@@ -181,7 +186,34 @@ class TimerEngine: ObservableObject {
         shortBreakDuration = TimeInterval(routine.shortBreakDuration * 60)
         longBreakDuration = TimeInterval(routine.longBreakDuration * 60)
         roundsBeforeLongBreak = routine.roundsBeforeLongBreak
-        totalRounds = routine.totalRounds
+        steps = routine.steps.isEmpty
+            ? [SessionStep].expandLegacy(
+                work: routine.workDuration,
+                shortBreak: routine.shortBreakDuration,
+                longBreak: routine.longBreakDuration,
+                longBreakEvery: routine.roundsBeforeLongBreak,
+                rounds: routine.totalRounds
+              )
+            : routine.steps
         reset()
+    }
+
+    func loadSteps(_ newSteps: [SessionStep], stepIndex: Int) {
+        guard !newSteps.isEmpty else { return }
+        steps = newSteps
+        currentStepIndex = min(max(0, stepIndex), newSteps.count - 1)
+        applyCurrentStepToState()
+    }
+
+    func currentStepDuration() -> TimeInterval {
+        guard !steps.isEmpty else { return totalTime }
+        let safeIndex = min(max(0, currentStepIndex), steps.count - 1)
+        return TimeInterval(steps[safeIndex].durationMinutes * 60)
+    }
+
+    func nextStepDuration() -> TimeInterval {
+        guard !steps.isEmpty else { return totalTime }
+        let nextIndex = (currentStepIndex + 1) % steps.count
+        return TimeInterval(steps[nextIndex].durationMinutes * 60)
     }
 }

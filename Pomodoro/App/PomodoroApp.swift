@@ -37,7 +37,34 @@ struct PomodoroApp: App {
         WindowGroup {
             MainTabView()
                 .environmentObject(routineSyncService)
+                .task {
+                    RoutineMigration.migrateLegacyRoutinesIfNeeded(context: sharedModelContainer.mainContext)
+                }
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+enum RoutineMigration {
+    @MainActor
+    static func migrateLegacyRoutinesIfNeeded(context: ModelContext) {
+        let descriptor = FetchDescriptor<Routine>()
+        guard let routines = try? context.fetch(descriptor) else { return }
+
+        var changed = false
+        for routine in routines where routine.sessionsData == nil {
+            let steps = [SessionStep].expandLegacy(
+                work: routine.workDuration,
+                shortBreak: routine.shortBreakDuration,
+                longBreak: routine.longBreakDuration,
+                longBreakEvery: routine.roundsBeforeLongBreak,
+                rounds: routine.totalRounds
+            )
+            routine.setSteps(steps)
+            changed = true
+        }
+        if changed {
+            try? context.save()
+        }
     }
 }
