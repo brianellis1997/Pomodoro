@@ -33,6 +33,7 @@ class TimerViewModel: ObservableObject {
     private var backgroundStartTime: Date?
     private var lastCompletedPhase: TimerPhase?
     private var lastCompletedRound: Int = 0
+    private var pendingPhaseNotificationIds: Set<String> = []
 
     private let liveActivityManager = LiveActivityManager.shared
     private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
@@ -288,22 +289,78 @@ class TimerViewModel: ObservableObject {
     }
 
     private func scheduleTimerNotification() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timerComplete"])
-
+        cancelTimerNotification()
         guard isRunning else { return }
 
+        let steps = engine.steps
+        guard !steps.isEmpty, timeRemaining > 0 else { return }
+
+        let autoStartBreaks = engine.autoStartBreaks
+        let autoStartWork = engine.autoStartWork
+        let maxChain = 16
+
+        var elapsed: TimeInterval = timeRemaining
+        var currentIdx = engine.currentStepIndex
+        var seq = 0
+
+        while seq < maxChain {
+            let nextIdx = (currentIdx + 1) % steps.count
+            let nextLabel = steps.displayLabel(at: nextIdx)
+            let currentKind = steps[currentIdx].kind
+            let willAutoStartNext = (currentKind == .focus) ? autoStartBreaks : autoStartWork
+
+            let title: String
+            let body: String
+            if willAutoStartNext {
+                title = "\(nextLabel) starting"
+                body = "\(steps[nextIdx].durationMinutes) min · tap to view"
+            } else {
+                let currentLabel = steps.displayLabel(at: currentIdx)
+                title = "\(currentLabel) complete"
+                body = "Tap to start \(nextLabel)"
+            }
+
+            scheduleSinglePhaseNotification(
+                identifier: "phaseEnd-\(seq)",
+                offset: elapsed,
+                title: title,
+                body: body
+            )
+            seq += 1
+
+            if !willAutoStartNext { break }
+
+            currentIdx = nextIdx
+            elapsed += TimeInterval(steps[currentIdx].durationMinutes * 60)
+        }
+    }
+
+    private func scheduleSinglePhaseNotification(
+        identifier: String,
+        offset: TimeInterval,
+        title: String,
+        body: String
+    ) {
+        guard offset > 0 else { return }
         let content = UNMutableNotificationContent()
-        content.title = phase == .work ? "Focus Session Complete!" : "Break Time Over!"
-        content.body = phase == .work ? "Time for a break. Great work!" : "Ready to focus again?"
+        content.title = title
+        content.body = body
         content.sound = .default
+        content.interruptionLevel = .timeSensitive
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeRemaining, repeats: false)
-        let request = UNNotificationRequest(identifier: "timerComplete", content: content, trigger: trigger)
-
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: offset, repeats: false)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+        pendingPhaseNotificationIds.insert(identifier)
     }
 
     private func cancelTimerNotification() {
+        if !pendingPhaseNotificationIds.isEmpty {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(
+                withIdentifiers: Array(pendingPhaseNotificationIds)
+            )
+            pendingPhaseNotificationIds.removeAll()
+        }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timerComplete"])
     }
 
