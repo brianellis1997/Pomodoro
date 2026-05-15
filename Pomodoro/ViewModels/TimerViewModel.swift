@@ -120,12 +120,13 @@ class TimerViewModel: ObservableObject {
 
     func onAppBecameActive() {
         print("[TimerVM] onAppBecameActive: state=\(engine.state.rawValue) autoStartBreaks=\(engine.autoStartBreaks) autoStartWork=\(engine.autoStartWork)")
+        if let savedEndTime = defaults?.double(forKey: "savedEndTime"),
+           savedEndTime > 0,
+           defaults?.bool(forKey: "savedIsRunning") == true {
+            restoreTimerState()
+        }
         if engine.state == .running {
             engine.ensureRunning()
-        } else if let savedEndTime = defaults?.double(forKey: "savedEndTime"),
-                  savedEndTime > 0,
-                  defaults?.bool(forKey: "savedIsRunning") == true {
-            restoreTimerState()
         }
 
         if isRunning {
