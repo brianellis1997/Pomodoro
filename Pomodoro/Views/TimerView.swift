@@ -42,7 +42,8 @@ struct TimerView: View {
                     CircularProgressView(
                         progress: viewModel.progress,
                         lineWidth: size * 0.06,
-                        color: viewModel.phaseColor
+                        color: viewModel.phaseColor,
+                        animated: dragStartAngle == nil
                     )
                     .frame(width: size, height: size)
 

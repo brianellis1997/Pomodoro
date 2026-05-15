@@ -4,8 +4,7 @@ struct CircularProgressView: View {
     let progress: Double
     let lineWidth: CGFloat
     let color: Color
-
-    @State private var animatedProgress: Double = 0
+    var animated: Bool = true
 
     var body: some View {
         ZStack {
@@ -16,7 +15,7 @@ struct CircularProgressView: View {
                 )
 
             Circle()
-                .trim(from: 0, to: animatedProgress)
+                .trim(from: 0, to: progress)
                 .stroke(
                     color,
                     style: StrokeStyle(
@@ -25,13 +24,7 @@ struct CircularProgressView: View {
                     )
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.3), value: animatedProgress)
-        }
-        .onChange(of: progress) { _, newValue in
-            animatedProgress = newValue
-        }
-        .onAppear {
-            animatedProgress = progress
+                .animation(animated ? .easeInOut(duration: 0.3) : nil, value: progress)
         }
     }
 }
