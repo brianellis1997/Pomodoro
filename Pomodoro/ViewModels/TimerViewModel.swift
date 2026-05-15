@@ -432,11 +432,16 @@ class TimerViewModel: ObservableObject {
         guard let savedEndTime = defaults?.double(forKey: "savedEndTime"),
               savedEndTime > 0,
               defaults?.bool(forKey: "savedIsRunning") == true else {
+            print("[Restore] EARLY EXIT — savedEndTime=\(defaults?.double(forKey: "savedEndTime") ?? -1) savedIsRunning=\(defaults?.bool(forKey: "savedIsRunning") ?? false) engineState=\(engine.state.rawValue) engineTimeRemaining=\(engine.timeRemaining)")
             return
         }
 
         let endDate = Date(timeIntervalSince1970: savedEndTime)
         let now = Date()
+        let savedPhaseStr = defaults?.string(forKey: "savedPhase") ?? "nil"
+        let savedStepIdx = defaults?.integer(forKey: "savedStepIndex") ?? -1
+        let savedTotalT = defaults?.double(forKey: "savedTotalTime") ?? -1
+        print("[Restore] ENTER endDate=\(endDate.timeIntervalSinceNow)s-from-now (negative=past) savedPhase=\(savedPhaseStr) savedStepIdx=\(savedStepIdx) savedTotalT=\(savedTotalT)s engineState=\(engine.state.rawValue) engineTimeRemaining=\(engine.timeRemaining)s engineCurrentStepIdx=\(engine.currentStepIndex)")
 
         engine.workDuration = defaults?.double(forKey: "savedWorkDuration") ?? 25 * 60
         engine.shortBreakDuration = defaults?.double(forKey: "savedShortBreakDuration") ?? 5 * 60
@@ -476,10 +481,13 @@ class TimerViewModel: ObservableObject {
 
         if endDate > now {
             engine.timeRemaining = endDate.timeIntervalSince(now)
+            print("[Restore] NOT-EXPIRED branch — set timeRemaining=\(engine.timeRemaining)s, calling engine.start() (state=\(engine.state.rawValue) before)")
             engine.start()
+            print("[Restore] NOT-EXPIRED after start() state=\(engine.state.rawValue)")
         } else {
             var overflowTime = now.timeIntervalSince(endDate)
             let firstCompletedPhase = engine.phase
+            print("[Restore] EXPIRED branch — overflowTime=\(overflowTime)s firstCompletedPhase=\(firstCompletedPhase.rawValue) engineCurrentStepIdx=\(engine.currentStepIndex)")
 
             if firstCompletedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
                 let workMinutes = Int(engine.totalTime / 60)
@@ -495,6 +503,7 @@ class TimerViewModel: ObservableObject {
 
             engine.timeRemaining = 0
             engine.skip()
+            print("[Restore] After first skip: phase=\(engine.phase.rawValue) currentStepIdx=\(engine.currentStepIndex) totalTime=\(engine.totalTime)s timeRemaining=\(engine.timeRemaining)s didWrap=\(engine.didWrapRoutine)")
 
             var phasesAdvanced = 1
             let maxChain = 20
@@ -526,14 +535,20 @@ class TimerViewModel: ObservableObject {
                                   (currentPhase == .work ? engine.autoStartWork : false)
 
             let shouldStartFromOverflow = overflowTime > 0 && overflowTime < engine.totalTime
+            print("[Restore] post-loop: phase=\(engine.phase.rawValue) totalTime=\(engine.totalTime)s timeRemaining=\(engine.timeRemaining)s overflowRemaining=\(overflowTime)s shouldAutoStart=\(shouldAutoStart) shouldStartFromOverflow=\(shouldStartFromOverflow) didWrap=\(engine.didWrapRoutine)")
             if !engine.didWrapRoutine && (shouldAutoStart || shouldStartFromOverflow) {
                 if shouldStartFromOverflow {
                     engine.timeRemaining = engine.totalTime - overflowTime
+                    print("[Restore] Applied overflow: timeRemaining=\(engine.timeRemaining)s")
                 }
+                print("[Restore] Calling engine.start() (state=\(engine.state.rawValue) before)")
                 engine.start()
+                print("[Restore] After start(): state=\(engine.state.rawValue) timeRemaining=\(engine.timeRemaining)s")
                 saveTimerState()
                 scheduleTimerNotification()
                 syncLiveActivity()
+            } else {
+                print("[Restore] NOT starting timer (didWrap=\(engine.didWrapRoutine) shouldAutoStart=\(shouldAutoStart) shouldStartFromOverflow=\(shouldStartFromOverflow))")
             }
         }
     }
@@ -690,6 +705,7 @@ class TimerViewModel: ObservableObject {
     }
 
     func applyTimerStateFromWatch(_ state: TimerStateTransfer) {
+        print("[WatchSync] applyTimerStateFromWatch: incoming phase=\(state.phase) timeRemaining=\(state.timeRemaining)s totalTime=\(state.totalTime)s isRunning=\(state.isRunning) iOS-engine timeRemaining-BEFORE=\(engine.timeRemaining)s")
         guard let newPhase = TimerPhase(rawValue: state.phase) else { return }
 
         let previousPhase = engine.phase
