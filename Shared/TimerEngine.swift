@@ -37,6 +37,7 @@ class TimerEngine: ObservableObject {
     var onAutoStart: (() -> Void)?
 
     private(set) var lastCompletedTimeRemaining: TimeInterval = 0
+    private(set) var didWrapRoutine: Bool = false
 
     var currentRound: Int {
         guard !steps.isEmpty else { return 1 }
@@ -163,10 +164,12 @@ class TimerEngine: ObservableObject {
         advancePhase()
         onPhaseAdvanced?()
 
-        let shouldAutoStart = (completedPhase == .work && autoStartBreaks) ||
-                              ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
+        let shouldAutoStart = !didWrapRoutine && (
+            (completedPhase == .work && autoStartBreaks) ||
+            ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
+        )
 
-        print("[TimerEngine] Phase \(completedPhase.rawValue) completed. autoStartBreaks=\(autoStartBreaks) autoStartWork=\(autoStartWork) shouldAutoStart=\(shouldAutoStart) nextPhase=\(phase.rawValue)")
+        print("[TimerEngine] Phase \(completedPhase.rawValue) completed. autoStartBreaks=\(autoStartBreaks) autoStartWork=\(autoStartWork) didWrapRoutine=\(didWrapRoutine) shouldAutoStart=\(shouldAutoStart) nextPhase=\(phase.rawValue)")
 
         if shouldAutoStart {
             start()
@@ -187,7 +190,14 @@ class TimerEngine: ObservableObject {
     private func advancePhase() {
         guard !steps.isEmpty else { return }
         lastCompletedTimeRemaining = max(0, timeRemaining)
-        currentStepIndex = (currentStepIndex + 1) % steps.count
+        let nextIndex = currentStepIndex + 1
+        if nextIndex >= steps.count {
+            didWrapRoutine = true
+            currentStepIndex = 0
+        } else {
+            didWrapRoutine = false
+            currentStepIndex = nextIndex
+        }
         applyCurrentStepToState()
     }
 

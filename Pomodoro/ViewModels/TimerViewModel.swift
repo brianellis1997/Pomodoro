@@ -98,6 +98,14 @@ class TimerViewModel: ObservableObject {
     }
 
     private func handlePhaseAdvanced() {
+        if engine.didWrapRoutine {
+            cancelTimerNotification()
+            clearSavedState()
+            liveActivityManager.endActivity()
+            syncWidgetData()
+            sendTimerStateToWatch()
+            return
+        }
         saveTimerState()
         syncLiveActivity()
         syncWidgetData()
@@ -304,13 +312,29 @@ class TimerViewModel: ObservableObject {
         var seq = 0
 
         while seq < maxChain {
-            let nextIdx = (currentIdx + 1) % steps.count
+            let isLastStep = currentIdx >= steps.count - 1
+
+            let title: String
+            let body: String
+
+            if isLastStep {
+                title = "Routine complete"
+                body = "\(currentRoutineName) finished"
+                scheduleSinglePhaseNotification(
+                    identifier: "phaseEnd-\(seq)",
+                    offset: elapsed,
+                    title: title,
+                    body: body
+                )
+                seq += 1
+                break
+            }
+
+            let nextIdx = currentIdx + 1
             let nextLabel = steps.displayLabel(at: nextIdx)
             let currentKind = steps[currentIdx].kind
             let willAutoStartNext = (currentKind == .focus) ? autoStartBreaks : autoStartWork
 
-            let title: String
-            let body: String
             if willAutoStartNext {
                 title = "\(nextLabel) starting"
                 body = "\(steps[nextIdx].durationMinutes) min · tap to view"
@@ -473,7 +497,7 @@ class TimerViewModel: ObservableObject {
 
             var phasesAdvanced = 1
             let maxChain = 20
-            while overflowTime > 0 && phasesAdvanced < maxChain {
+            while !engine.didWrapRoutine && overflowTime > 0 && phasesAdvanced < maxChain {
                 let shouldAutoAdvance: Bool
                 let currentPhase = engine.phase
                 if currentPhase == .work {
@@ -501,7 +525,7 @@ class TimerViewModel: ObservableObject {
                                   (currentPhase == .work ? engine.autoStartWork : false)
 
             let shouldStartFromOverflow = overflowTime > 0 && overflowTime < engine.totalTime
-            if shouldAutoStart || shouldStartFromOverflow {
+            if !engine.didWrapRoutine && (shouldAutoStart || shouldStartFromOverflow) {
                 if shouldStartFromOverflow {
                     engine.timeRemaining = engine.totalTime - overflowTime
                 }
