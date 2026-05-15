@@ -457,7 +457,7 @@ class TimerViewModel: ObservableObject {
             let firstCompletedPhase = engine.phase
 
             if firstCompletedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
-                let workMinutes = Int(engine.currentStepDuration() / 60)
+                let workMinutes = Int(engine.totalTime / 60)
                 pendingRestoredSession = RestoredSession(
                     routineName: currentRoutineName,
                     durationMinutes: workMinutes,
@@ -514,6 +514,23 @@ class TimerViewModel: ObservableObject {
     private func clearSavedState() {
         defaults?.removeObject(forKey: "savedEndTime")
         defaults?.removeObject(forKey: "savedIsRunning")
+    }
+
+    func beginTimeAdjustment() {
+        engine.beginAdjustment()
+    }
+
+    func previewTimeAdjustment(newRemaining: TimeInterval) {
+        engine.previewAdjustment(newRemaining: newRemaining)
+    }
+
+    func commitTimeAdjustment() {
+        engine.commitAdjustment()
+        saveTimerState()
+        scheduleTimerNotification()
+        syncLiveActivity()
+        syncWidgetData()
+        sendTimerStateToWatch()
     }
 
     func checkPendingWidgetActions() {

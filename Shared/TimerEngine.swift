@@ -110,6 +110,29 @@ class TimerEngine: ObservableObject {
         applyCurrentStepToState()
     }
 
+    func beginAdjustment() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    func previewAdjustment(newRemaining: TimeInterval) {
+        let elapsed = max(0, totalTime - timeRemaining)
+        let safeRemaining = max(60, newRemaining)
+        totalTime = elapsed + safeRemaining
+        timeRemaining = safeRemaining
+    }
+
+    func commitAdjustment() {
+        if state == .running {
+            endDate = Date().addingTimeInterval(timeRemaining)
+            timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    self?.tick()
+                }
+            }
+        }
+    }
+
     func skip() {
         timer?.invalidate()
         timer = nil

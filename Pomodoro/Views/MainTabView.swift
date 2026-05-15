@@ -369,7 +369,7 @@ struct TimerTab: View {
     }
 
     private func checkAndRecordSession() {
-        let workDurationSeconds = timerViewModel.engine.workDuration
+        let workDurationSeconds = timerViewModel.totalTime
         let workDurationMinutes = Int(workDurationSeconds / 60)
 
         guard let startTime = timerViewModel.sessionStartTime else {
