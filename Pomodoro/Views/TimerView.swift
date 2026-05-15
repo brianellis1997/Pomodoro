@@ -125,7 +125,11 @@ struct TimerView: View {
         var candidate = dragStartRemaining - timeDeltaSec
         candidate = max(60, min(candidate, dragStartRemaining))
 
-        viewModel.previewTimeAdjustment(newRemaining: candidate)
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            viewModel.previewTimeAdjustment(newRemaining: candidate)
+        }
 
         let nowMinute = Int(candidate / 60)
         if let prev = dragLastHapticMinute, prev != nowMinute {
