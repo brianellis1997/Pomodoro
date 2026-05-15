@@ -169,7 +169,7 @@ class TimerEngine: ObservableObject {
             ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
         )
 
-        print("[TimerEngine] Phase \(completedPhase.rawValue) completed. autoStartBreaks=\(autoStartBreaks) autoStartWork=\(autoStartWork) didWrapRoutine=\(didWrapRoutine) shouldAutoStart=\(shouldAutoStart) nextPhase=\(phase.rawValue)")
+        print("[TimerEngine] timerCompleted phase=\(completedPhase.rawValue) → \(phase.rawValue) didWrapRoutine=\(didWrapRoutine) shouldAutoStart=\(shouldAutoStart) (autoBreaks=\(autoStartBreaks) autoWork=\(autoStartWork))")
 
         if shouldAutoStart {
             start()

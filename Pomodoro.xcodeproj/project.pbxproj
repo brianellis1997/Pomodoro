@@ -70,6 +70,8 @@
 		FFFFAAAA000000000000B002 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
 		FFFFAAAA000000000000B003 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
 		FFFFAAAA000000000000B004 /* SessionStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F001 /* SessionStep.swift */; };
+		FFFFAAAA000000000000B005 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F002 /* DebugLog.swift */; };
+		FFFFAAAA000000000000B006 /* DebugLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFFAAAA000000000000F003 /* DebugLogView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +170,8 @@
 		BEA0F29A2A1F53DD7704B116 /* StudySession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySession.swift; sourceTree = "<group>"; };
 		C353FADFBAFFF3B678B2267E /* TimerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerEngine.swift; sourceTree = "<group>"; };
 		FFFFAAAA000000000000F001 /* SessionStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStep.swift; sourceTree = "<group>"; };
+		FFFFAAAA000000000000F002 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		FFFFAAAA000000000000F003 /* DebugLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogView.swift; sourceTree = "<group>"; };
 		C9747E5F5B2F719CC6E09CD0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CAE4B90E98DC98D65F7EF466 /* PomodoroWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PomodoroWatch.entitlements; sourceTree = "<group>"; };
 		CC93B2BD5546E302DA8727FB /* WatchStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStatsView.swift; sourceTree = "<group>"; };
@@ -195,6 +199,7 @@
 			children = (
 				1C6169B14F727CD0D804AB01 /* Components */,
 				78A6A3CA075C9FFA8CE14A5A /* AchievementsView.swift */,
+				FFFFAAAA000000000000F003 /* DebugLogView.swift */,
 				1FB55028DCAD027BE679B53D /* MainTabView.swift */,
 				63CD41765F12DA0A534BEA0F /* RoutineBuilderView.swift */,
 				9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */,
@@ -293,6 +298,7 @@
 			isa = PBXGroup;
 			children = (
 				F4FADA8346945B4ACF382328 /* CalendarService.swift */,
+				FFFFAAAA000000000000F002 /* DebugLog.swift */,
 				267073533806DE02C2434E89 /* LiveActivityManager.swift */,
 				FD432F4C4B1CD8A922B2503F /* NotificationDelegate.swift */,
 				A191EAC8F21E3B3423DDE32B /* RoutineSyncService.swift */,
@@ -576,6 +582,8 @@
 				0FA11D496F55A8EEF5F401A6 /* RoutineBuilderView.swift in Sources */,
 				CFEF0D0224CF65EC3FCFAB71 /* RoutineConfiguration.swift in Sources */,
 				46935FAABAB86C1F692C4D7F /* RoutineSyncService.swift in Sources */,
+				FFFFAAAA000000000000B005 /* DebugLog.swift in Sources */,
+				FFFFAAAA000000000000B006 /* DebugLogView.swift in Sources */,
 				77661E592CB48B044BE3CC25 /* SessionTag.swift in Sources */,
 				FFFFAAAA000000000000B004 /* SessionStep.swift in Sources */,
 				49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */,

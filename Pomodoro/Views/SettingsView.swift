@@ -27,6 +27,7 @@ struct SettingsView: View {
                 integrationsSection
                 tagsSection
                 aboutSection
+                debugSection
             }
             .navigationTitle("Settings")
         }
@@ -257,6 +258,26 @@ struct SettingsView: View {
             }
         } header: {
             Label("About", systemImage: "info.circle")
+        }
+    }
+
+    private var debugSection: some View {
+        Section {
+            NavigationLink {
+                DebugLogView()
+            } label: {
+                HStack {
+                    Text("Debug Log")
+                    Spacer()
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .foregroundColor(.secondary)
+                }
+            }
+        } header: {
+            Label("Diagnostics", systemImage: "ant")
+        } footer: {
+            Text("If something's misbehaving, reproduce it, then open this to see what the engine did. Share the log to send it to support.")
+                .font(.caption2)
         }
     }
 
