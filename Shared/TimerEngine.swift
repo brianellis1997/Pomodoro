@@ -155,6 +155,16 @@ class TimerEngine: ObservableObject {
     private func timerCompleted() {
         timer?.invalidate()
         timer = nil
+
+        // Compute how far past endDate we are. If the app was suspended for a long
+        // time before this tick fired, this overflow accounts for the time that
+        // would have elapsed in subsequent phases.
+        let overflowFromEndDate: TimeInterval
+        if let endDate = endDate {
+            overflowFromEndDate = max(0, -endDate.timeIntervalSinceNow)
+        } else {
+            overflowFromEndDate = 0
+        }
         endDate = nil
         state = .idle
 
@@ -169,12 +179,39 @@ class TimerEngine: ObservableObject {
             ((completedPhase == .shortBreak || completedPhase == .longBreak) && autoStartWork)
         )
 
-        print("[TimerEngine] timerCompleted phase=\(completedPhase.rawValue) → \(phase.rawValue) didWrapRoutine=\(didWrapRoutine) shouldAutoStart=\(shouldAutoStart) (autoBreaks=\(autoStartBreaks) autoWork=\(autoStartWork))")
+        print("[TimerEngine] timerCompleted phase=\(completedPhase.rawValue) → \(phase.rawValue) overflow=\(overflowFromEndDate)s didWrapRoutine=\(didWrapRoutine) shouldAutoStart=\(shouldAutoStart) (autoBreaks=\(autoStartBreaks) autoWork=\(autoStartWork))")
 
         if shouldAutoStart {
+            let remainingOverflow = consumeOverflowChain(initial: overflowFromEndDate)
+            if didWrapRoutine {
+                return
+            }
+            if remainingOverflow > 0 && remainingOverflow < totalTime {
+                timeRemaining = max(60, totalTime - remainingOverflow)
+            }
             start()
             onAutoStart?()
         }
+    }
+
+    private func consumeOverflowChain(initial: TimeInterval) -> TimeInterval {
+        var remaining = initial
+        let maxChain = 16
+        var advances = 0
+        while remaining > 0 && !didWrapRoutine && advances < maxChain {
+            let safeIndex = min(max(0, currentStepIndex), max(0, steps.count - 1))
+            guard !steps.isEmpty else { break }
+            let kind = steps[safeIndex].kind
+            let nextAutoStart = (kind == .focus) ? autoStartBreaks : autoStartWork
+            let currentDuration = currentStepDuration()
+            if !nextAutoStart || remaining < currentDuration {
+                break
+            }
+            remaining -= currentDuration
+            advancePhase()
+            advances += 1
+        }
+        return remaining
     }
 
     func ensureRunning() {
