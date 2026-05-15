@@ -89,7 +89,7 @@ struct TimerView: View {
             return "Release to set"
         }
         if viewModel.isRunning {
-            return "Tap to pause · drag to shorten"
+            return "Tap to pause · drag ↺ to shorten"
         }
         if viewModel.isPaused {
             return "Tap to resume"
@@ -122,7 +122,7 @@ struct TimerView: View {
 
         guard dragStartTotal > 0 else { return }
         let timeDeltaSec = (dragCumulativeDelta / (2 * .pi)) * dragStartTotal
-        var candidate = dragStartRemaining - timeDeltaSec
+        var candidate = dragStartRemaining + timeDeltaSec
         candidate = max(60, min(candidate, dragStartRemaining))
 
         var transaction = Transaction()

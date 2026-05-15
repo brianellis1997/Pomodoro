@@ -468,6 +468,7 @@ class TimerViewModel: ObservableObject {
                 defaults?.removeObject(forKey: "savedSessionStartTime")
             }
 
+            engine.timeRemaining = 0
             engine.skip()
 
             var phasesAdvanced = 1
@@ -488,6 +489,7 @@ class TimerViewModel: ObservableObject {
                 }
 
                 overflowTime -= currentPhaseDuration
+                engine.timeRemaining = 0
                 engine.skip()
                 phasesAdvanced += 1
             }

@@ -369,27 +369,27 @@ struct TimerTab: View {
     }
 
     private func checkAndRecordSession() {
-        let workDurationSeconds = timerViewModel.totalTime
-        let workDurationMinutes = Int(workDurationSeconds / 60)
-
         guard let startTime = timerViewModel.sessionStartTime else {
             return
         }
 
         let elapsedTime = Date().timeIntervalSince(startTime)
-        let completionPercentage = elapsedTime / workDurationSeconds
+        let remainingAtCompletion = timerViewModel.engine.lastCompletedTimeRemaining
+        let committedDuration = elapsedTime + remainingAtCompletion
+        let completionPercentage = committedDuration > 0 ? elapsedTime / committedDuration : 1.0
+        let actualMinutes = max(1, Int(elapsedTime / 60))
 
         let minimumThreshold = 0.80
         let hadViolation = timerViewModel.sessionFailed
         let wasFullSession = completionPercentage >= 0.95
 
         if completionPercentage >= minimumThreshold {
-            let points = hadViolation ? workDurationMinutes : workDurationMinutes * 3
+            let points = hadViolation ? actualMinutes : actualMinutes * 3
             earnedPoints = points
 
             pendingSessionData = PendingSession(
                 routineName: timerViewModel.currentRoutineName,
-                durationMinutes: workDurationMinutes,
+                durationMinutes: actualMinutes,
                 wasFullSession: wasFullSession,
                 hadFocusViolation: hadViolation,
                 focusModeEnabled: timerViewModel.focusModeEnabled,

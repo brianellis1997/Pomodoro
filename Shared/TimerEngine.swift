@@ -36,6 +36,8 @@ class TimerEngine: ObservableObject {
     var onPhaseAdvanced: (() -> Void)?
     var onAutoStart: (() -> Void)?
 
+    private(set) var lastCompletedTimeRemaining: TimeInterval = 0
+
     var currentRound: Int {
         guard !steps.isEmpty else { return 1 }
         let upperBound = min(currentStepIndex, steps.count - 1)
@@ -116,9 +118,7 @@ class TimerEngine: ObservableObject {
     }
 
     func previewAdjustment(newRemaining: TimeInterval) {
-        let elapsed = max(0, totalTime - timeRemaining)
-        let safeRemaining = max(60, newRemaining)
-        totalTime = elapsed + safeRemaining
+        let safeRemaining = max(60, min(newRemaining, totalTime))
         timeRemaining = safeRemaining
     }
 
@@ -186,6 +186,7 @@ class TimerEngine: ObservableObject {
 
     private func advancePhase() {
         guard !steps.isEmpty else { return }
+        lastCompletedTimeRemaining = max(0, timeRemaining)
         currentStepIndex = (currentStepIndex + 1) % steps.count
         applyCurrentStepToState()
     }
