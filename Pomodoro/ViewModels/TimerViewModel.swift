@@ -316,6 +316,7 @@ class TimerViewModel: ObservableObject {
 
         while seq < maxChain {
             let isLastStep = currentIdx >= steps.count - 1
+            let identifier = "phaseEnd-step\(currentIdx)"
 
             let title: String
             let body: String
@@ -324,7 +325,7 @@ class TimerViewModel: ObservableObject {
                 title = "Routine complete"
                 body = "\(currentRoutineName) finished"
                 scheduleSinglePhaseNotification(
-                    identifier: "phaseEnd-\(seq)",
+                    identifier: identifier,
                     offset: elapsed,
                     title: title,
                     body: body
@@ -348,7 +349,7 @@ class TimerViewModel: ObservableObject {
             }
 
             scheduleSinglePhaseNotification(
-                identifier: "phaseEnd-\(seq)",
+                identifier: identifier,
                 offset: elapsed,
                 title: title,
                 body: body
@@ -382,13 +383,19 @@ class TimerViewModel: ObservableObject {
     }
 
     private func cancelTimerNotification() {
-        if !pendingPhaseNotificationIds.isEmpty {
-            UNUserNotificationCenter.current().removePendingNotificationRequests(
-                withIdentifiers: Array(pendingPhaseNotificationIds)
-            )
-            pendingPhaseNotificationIds.removeAll()
+        // Wipe any pending notifications matching our phase-notification scheme,
+        // including ones scheduled by previous VM instances (cold launch leaves
+        // pendingPhaseNotificationIds empty even though iOS still has them
+        // queued). Step-based identifiers + sequential legacy identifiers both
+        // covered; nonexistent IDs are silently ignored by iOS.
+        var idsToRemove = Array(pendingPhaseNotificationIds)
+        for i in 0..<64 {
+            idsToRemove.append("phaseEnd-step\(i)")
+            idsToRemove.append("phaseEnd-\(i)")
         }
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timerComplete"])
+        idsToRemove.append("timerComplete")
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: idsToRemove)
+        pendingPhaseNotificationIds.removeAll()
     }
 
     private func scheduleCompletionNotification(for phase: TimerPhase) {
