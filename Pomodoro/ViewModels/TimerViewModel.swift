@@ -15,12 +15,20 @@ class TimerViewModel: ObservableObject {
     @Published var showCloseCallMessage: Bool = false
     @Published var violationBannerDismissed: Bool = false
     @Published var sessionStartTime: Date?
-    @Published var pendingRestoredSession: RestoredSession?
+    @Published var pendingRestoredSessions: [RestoredSession] = []
 
-    struct RestoredSession {
+    struct RestoredSession: Equatable {
+        let id: UUID
         let routineName: String
         let durationMinutes: Int
         let wasFullSession: Bool
+
+        init(routineName: String, durationMinutes: Int, wasFullSession: Bool) {
+            self.id = UUID()
+            self.routineName = routineName
+            self.durationMinutes = durationMinutes
+            self.wasFullSession = wasFullSession
+        }
     }
 
     static let focusGracePeriod: TimeInterval = 5.0
@@ -89,6 +97,10 @@ class TimerViewModel: ObservableObject {
 
         engine.onAutoStart = { [weak self] in
             self?.handleAutoStart()
+        }
+
+        engine.onWorkPhaseSkipped = { [weak self] minutes in
+            self?.recordRestoredWorkPhase(minutes: minutes)
         }
 
         restoreTimerState()
@@ -276,6 +288,18 @@ class TimerViewModel: ObservableObject {
 
     func markSessionRecorded() {
         defaults?.set(false, forKey: "savedWorkSessionPending")
+    }
+
+    private func recordRestoredWorkPhase(minutes: Int) {
+        guard minutes > 0 else { return }
+        DebugLog.shared.log("[CatchUp] queueing restored work session: \(minutes)m routine=\(currentRoutineName)")
+        pendingRestoredSessions.append(
+            RestoredSession(
+                routineName: currentRoutineName,
+                durationMinutes: minutes,
+                wasFullSession: true
+            )
+        )
     }
 
     private func handlePhaseComplete(_ phase: TimerPhase) {
@@ -502,11 +526,7 @@ class TimerViewModel: ObservableObject {
 
             if firstCompletedPhase == .work || defaults?.bool(forKey: "savedWorkSessionPending") == true {
                 let workMinutes = Int(engine.totalTime / 60)
-                pendingRestoredSession = RestoredSession(
-                    routineName: currentRoutineName,
-                    durationMinutes: workMinutes,
-                    wasFullSession: true
-                )
+                recordRestoredWorkPhase(minutes: workMinutes)
                 defaults?.set(false, forKey: "savedWorkSessionPending")
                 sessionStartTime = nil
                 defaults?.removeObject(forKey: "savedSessionStartTime")
@@ -531,6 +551,10 @@ class TimerViewModel: ObservableObject {
 
                 if !shouldAutoAdvance || overflowTime < currentPhaseDuration {
                     break
+                }
+
+                if currentPhase == .work {
+                    recordRestoredWorkPhase(minutes: Int(currentPhaseDuration / 60))
                 }
 
                 overflowTime -= currentPhaseDuration

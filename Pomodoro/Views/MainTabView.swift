@@ -75,13 +75,11 @@ struct MainTabView: View {
         .onAppear {
             statsService.setModelContext(modelContext)
             routineSyncService.setModelContext(modelContext)
-            if let restored = timerViewModel.pendingRestoredSession {
-                statsService.recordSession(
-                    routineName: restored.routineName,
-                    durationMinutes: restored.durationMinutes,
-                    wasFullSession: restored.wasFullSession
-                )
-                timerViewModel.pendingRestoredSession = nil
+            drainPendingRestoredSessions()
+        }
+        .onChange(of: timerViewModel.pendingRestoredSessions) { _, newValue in
+            if !newValue.isEmpty {
+                drainPendingRestoredSessions()
             }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -138,6 +136,19 @@ struct MainTabView: View {
             wasFullSession: session.wasFullSession
         )
         sendStatsToWatch()
+    }
+
+    private func drainPendingRestoredSessions() {
+        let pending = timerViewModel.pendingRestoredSessions
+        guard !pending.isEmpty else { return }
+        for restored in pending {
+            statsService.recordSession(
+                routineName: restored.routineName,
+                durationMinutes: restored.durationMinutes,
+                wasFullSession: restored.wasFullSession
+            )
+        }
+        timerViewModel.pendingRestoredSessions.removeAll()
     }
 
     private func sendStatsToWatch() {

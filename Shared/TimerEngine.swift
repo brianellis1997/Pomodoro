@@ -35,6 +35,7 @@ class TimerEngine: ObservableObject {
     var onPhaseComplete: ((TimerPhase) -> Void)?
     var onPhaseAdvanced: (() -> Void)?
     var onAutoStart: (() -> Void)?
+    var onWorkPhaseSkipped: ((Int) -> Void)?
 
     private(set) var lastCompletedTimeRemaining: TimeInterval = 0
     private(set) var didWrapRoutine: Bool = false
@@ -206,6 +207,9 @@ class TimerEngine: ObservableObject {
             let currentDuration = currentStepDuration()
             if !nextAutoStart || remaining < currentDuration {
                 break
+            }
+            if kind == .focus {
+                onWorkPhaseSkipped?(Int(currentDuration / 60))
             }
             remaining -= currentDuration
             advancePhase()
