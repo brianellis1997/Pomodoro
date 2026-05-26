@@ -170,6 +170,7 @@ class TimerEngine: ObservableObject {
         state = .idle
 
         let completedPhase = phase
+        let completedPhaseDurationMinutes = Int(totalTime / 60)
         onPhaseComplete?(completedPhase)
 
         advancePhase()
@@ -186,6 +187,9 @@ class TimerEngine: ObservableObject {
             let remainingOverflow = consumeOverflowChain(initial: overflowFromEndDate)
             if didWrapRoutine {
                 return
+            }
+            if completedPhase == .work && phase == .work {
+                onWorkPhaseSkipped?(completedPhaseDurationMinutes)
             }
             if remainingOverflow > 0 && remainingOverflow < totalTime {
                 timeRemaining = max(60, totalTime - remainingOverflow)

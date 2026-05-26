@@ -10,6 +10,10 @@ struct MainTabView: View {
     @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
     @State private var selectedTab = 0
     @State private var showAchievementAlert = false
+    @State private var showRestoredSessionsAlert = false
+    @State private var restoredSessionsPoints = 0
+    @State private var restoredSessionsMinutes = 0
+    @State private var restoredSessionsCount = 0
 
     var body: some View {
         ZStack {
@@ -67,6 +71,11 @@ struct MainTabView: View {
             }
         }
         .animation(.spring(), value: showAchievementAlert)
+        .alert("Background sessions recorded", isPresented: $showRestoredSessionsAlert) {
+            Button("OK") { }
+        } message: {
+            Text("\(restoredSessionsCount) session\(restoredSessionsCount == 1 ? "" : "s") · \(restoredSessionsMinutes) min · +\(restoredSessionsPoints) points")
+        }
         .onChange(of: statsService.newlyUnlockedAchievements) { _, newValue in
             if !newValue.isEmpty {
                 showAchievementAlert = true
@@ -141,6 +150,8 @@ struct MainTabView: View {
     private func drainPendingRestoredSessions() {
         let pending = timerViewModel.pendingRestoredSessions
         guard !pending.isEmpty else { return }
+        let pointsBefore = statsService.userStats?.totalPoints ?? 0
+        let totalMinutes = pending.reduce(0) { $0 + $1.durationMinutes }
         for restored in pending {
             statsService.recordSession(
                 routineName: restored.routineName,
@@ -149,6 +160,14 @@ struct MainTabView: View {
             )
         }
         timerViewModel.pendingRestoredSessions.removeAll()
+        let pointsAfter = statsService.userStats?.totalPoints ?? 0
+        let pointsGained = max(0, pointsAfter - pointsBefore)
+        if pointsGained > 0 {
+            restoredSessionsPoints = pointsGained
+            restoredSessionsMinutes = totalMinutes
+            restoredSessionsCount = pending.count
+            showRestoredSessionsAlert = true
+        }
     }
 
     private func sendStatsToWatch() {
