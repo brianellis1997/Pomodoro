@@ -80,7 +80,7 @@ struct WatchStatsView: View {
     }
 
     private func loadStats() {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         totalSessions = defaults?.integer(forKey: "stats_totalSessions") ?? 0
         totalMinutes = defaults?.integer(forKey: "stats_totalMinutes") ?? 0
         currentStreak = defaults?.integer(forKey: "stats_currentStreak") ?? 0
@@ -112,7 +112,7 @@ struct WatchStatsView: View {
         totalPoints = stats.totalPoints
         level = stats.level
 
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         defaults?.set(stats.totalSessions, forKey: "stats_totalSessions")
         defaults?.set(stats.totalMinutes, forKey: "stats_totalMinutes")
         defaults?.set(stats.currentStreak, forKey: "stats_currentStreak")

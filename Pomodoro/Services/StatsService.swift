@@ -63,7 +63,7 @@ class StatsService: ObservableObject {
     }
 
     private func syncStatsToWatch() {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         defaults?.set(userStats?.totalSessionsCompleted ?? 0, forKey: "stats_totalSessions")
         defaults?.set(userStats?.totalMinutesStudied ?? 0, forKey: "stats_totalMinutes")
         defaults?.set(userStats?.currentStreak ?? 0, forKey: "stats_currentStreak")

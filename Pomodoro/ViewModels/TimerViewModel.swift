@@ -44,7 +44,7 @@ class TimerViewModel: ObservableObject {
     private var pendingPhaseNotificationIds: Set<String> = []
 
     private let liveActivityManager = LiveActivityManager.shared
-    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
 
     var timeRemaining: TimeInterval { engine.timeRemaining }
     var totalTime: TimeInterval { engine.totalTime }
@@ -611,7 +611,7 @@ class TimerViewModel: ObservableObject {
     }
 
     func checkPendingWidgetActions() {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
 
         guard defaults?.bool(forKey: "pendingAction") == true else { return }
 
@@ -717,7 +717,7 @@ class TimerViewModel: ObservableObject {
     }
 
     private func syncWidgetData() {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         defaults?.set(timeRemaining, forKey: "remainingTime")
         defaults?.set(totalTime, forKey: "totalTime")
         defaults?.set(phase.rawValue, forKey: "phase")

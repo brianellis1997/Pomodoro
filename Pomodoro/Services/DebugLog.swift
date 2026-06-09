@@ -5,7 +5,7 @@ final class DebugLog {
 
     private let key = "debugLog"
     private let maxLines = 300
-    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
     private let queue = DispatchQueue(label: "com.bdogellis.pomodoro.debuglog")
     private let formatter: DateFormatter = {
         let f = DateFormatter()

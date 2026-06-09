@@ -13,7 +13,7 @@ struct WatchTimerView: View {
     @State private var justSkipped: Bool = false
     @State private var sessionStartTime: Date?
 
-    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+    private let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
 
     var body: some View {
         NavigationStack {

@@ -626,7 +626,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = PomodoroWidget/PomodoroWidget.entitlements;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = PomodoroWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -647,7 +647,7 @@
 				CODE_SIGN_ENTITLEMENTS = PomodoroWatch/PomodoroWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = PomodoroWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bdogellis.pomodoro.watchkitapp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -786,7 +786,7 @@
 				CODE_SIGN_ENTITLEMENTS = Pomodoro/Pomodoro.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = Pomodoro/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -805,7 +805,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = PomodoroWidget/PomodoroWidget.entitlements;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = PomodoroWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -826,7 +826,7 @@
 				CODE_SIGN_ENTITLEMENTS = PomodoroWatch/PomodoroWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = PomodoroWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bdogellis.pomodoro.watchkitapp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -844,7 +844,7 @@
 				CODE_SIGN_ENTITLEMENTS = PomodoroWatchWidget/PomodoroWatchWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = PomodoroWatchWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -867,7 +867,7 @@
 				CODE_SIGN_ENTITLEMENTS = PomodoroWatchWidget/PomodoroWatchWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = PomodoroWatchWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -890,7 +890,7 @@
 				CODE_SIGN_ENTITLEMENTS = Pomodoro/Pomodoro.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = PB569DUJ73;
+				DEVELOPMENT_TEAM = XH2327BVX8;
 				INFOPLIST_FILE = Pomodoro/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

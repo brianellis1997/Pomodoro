@@ -9,7 +9,7 @@ class LiveActivityManager: ObservableObject {
     private var currentActivity: Activity<PomodoroActivityAttributes>?
     private var currentRoutineName: String = "Classic Pomodoro"
 
-    private let appGroupDefaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+    private let appGroupDefaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
 
     private init() {}
 

@@ -6,7 +6,7 @@ struct ToggleTimerIntent: AppIntent {
     static var description = IntentDescription("Starts or pauses the Pomodoro timer")
 
     func perform() async throws -> some IntentResult {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         let isRunning = defaults?.bool(forKey: "isRunning") ?? false
 
         if !isRunning {
@@ -30,7 +30,7 @@ struct ResetTimerIntent: AppIntent {
     static var description = IntentDescription("Resets the Pomodoro timer")
 
     func perform() async throws -> some IntentResult {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         defaults?.set(false, forKey: "isRunning")
         defaults?.removeObject(forKey: "endTime")
         defaults?.set(true, forKey: "pendingAction")
@@ -45,7 +45,7 @@ struct SkipPhaseIntent: AppIntent {
     static var description = IntentDescription("Skips to the next phase")
 
     func perform() async throws -> some IntentResult {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         defaults?.set(true, forKey: "pendingAction")
         defaults?.set("skip", forKey: "actionType")
         WidgetCenter.shared.reloadAllTimelines()

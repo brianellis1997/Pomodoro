@@ -21,7 +21,7 @@ struct WatchPomodoroProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<WatchPomodoroEntry>) -> Void) {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
         let isRunning = defaults?.bool(forKey: "isRunning") ?? false
         let endTimeInterval = defaults?.double(forKey: "endTime") ?? 0
 
@@ -55,7 +55,7 @@ struct WatchPomodoroProvider: TimelineProvider {
     }
 
     private func loadCurrentEntry(for date: Date, endTime: Date? = nil) -> WatchPomodoroEntry {
-        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro")
+        let defaults = UserDefaults(suiteName: "group.com.bdogellis.pomodoro.qillc")
 
         let storedTotalTime = defaults?.double(forKey: "totalTime") ?? 0
         let phaseRaw = defaults?.string(forKey: "phase") ?? "work"

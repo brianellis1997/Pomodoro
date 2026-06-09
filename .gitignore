@@ -54,3 +54,7 @@ fastlane/test_output
 ChatGPT*.png
 pomodoro_icon.jpg
 PLAN_CLOUDKIT_SYNC.md
+
+# Local signing override (QILLC team) — keeps public repo's project.pbxproj clean
+Local.xcconfig
+**/Local.xcconfig
