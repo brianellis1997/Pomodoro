@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var jbEnabled = JournalBuddySync.shared.isEnabled
     @State private var jbHabit = JournalBuddySync.shared.habitName
     @State private var jbToken = JournalBuddySync.shared.token
+    @State private var jbRouteByRoutine = JournalBuddySync.shared.routeByRoutine
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsArray: [AppSettings]
     @State private var showingCalendarPermission = false
@@ -250,6 +251,12 @@ struct SettingsView: View {
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
 
+                Toggle("Match habit to routine name", isOn: Binding(
+                    get: { jbRouteByRoutine },
+                    set: { jbRouteByRoutine = $0; JournalBuddySync.shared.routeByRoutine = $0 }
+                ))
+                .font(.callout)
+
                 Button("Test connection") {
                     Task { await JournalBuddySync.shared.testConnection() }
                 }
@@ -271,7 +278,7 @@ struct SettingsView: View {
         } header: {
             Label("JournalBuddy", systemImage: "arrow.up.forward.app")
         } footer: {
-            Text("Finished sessions are recorded against a habit in JournalBuddy, so the same block is not timed twice. Get the token from JournalBuddy under Profile. It can only add sessions.")
+            Text("Finished sessions are recorded against a habit in JournalBuddy, so the same block is not timed twice. With routine matching on, a routine named \"Studying\" lands on a habit called Studying, falling back to the one above. Get the token from JournalBuddy under Profile: it can only add sessions.")
         }
     }
 

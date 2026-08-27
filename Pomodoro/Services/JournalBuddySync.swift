@@ -19,6 +19,7 @@ final class JournalBuddySync: ObservableObject {
         static let enabled = "journalBuddySyncEnabled"
         static let queue = "journalBuddyPendingSessions"
         static let lastResult = "journalBuddyLastResult"
+        static let routeByRoutine = "journalBuddyRouteByRoutine"
     }
 
     private let endpoint = URL(string: "https://backend-production-454e.up.railway.app/api/v1/ingest/session")!
@@ -41,12 +42,18 @@ final class JournalBuddySync: ObservableObject {
         set { defaults.set(newValue, forKey: Key.enabled) }
     }
 
+    var routeByRoutine: Bool {
+        get { defaults.bool(forKey: Key.routeByRoutine) }
+        set { defaults.set(newValue, forKey: Key.routeByRoutine) }
+    }
+
     var isConfigured: Bool { isEnabled && !token.isEmpty }
 
     // MARK: - Sending
 
     struct Payload: Codable {
         let habit: String
+        let fallback_habit: String?
         let minutes: Double
         let started_at: String
         let ended_at: String
@@ -67,7 +74,11 @@ final class JournalBuddySync: ObservableObject {
         stamp.timeZone = TimeZone.current
 
         let payload = Payload(
-            habit: habitName,
+            // The routine's own name is usually the better habit name: a
+            // "Studying" routine belongs on Studying, not on Work. If no habit
+            // matches it, the server falls back to the configured one.
+            habit: routeByRoutine ? routineName : habitName,
+            fallback_habit: routeByRoutine ? habitName : nil,
             minutes: Double(minutes),
             started_at: stamp.string(from: endedAt.addingTimeInterval(-Double(minutes) * 60)),
             ended_at: stamp.string(from: endedAt),
@@ -107,8 +118,13 @@ final class JournalBuddySync: ObservableObject {
             let (data, response) = try await URLSession.shared.data(for: request)
             let code = (response as? HTTPURLResponse)?.statusCode ?? 0
             if code == 200 {
-                let dup = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])??["duplicate"] as? Bool
-                setResult(dup == true ? "Already recorded" : "Sent \(Int(payload.minutes))m to \(payload.habit)")
+                let dup = ((try? JSONSerialization.jsonObject(with: data)) as? [String: Any])?["duplicate"] as? Bool
+                let body = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+                let landedOn = body?["habit"] as? String ?? payload.habit
+                let finished = body?["completed_habit"] as? Bool == true
+                setResult(dup == true
+                    ? "Already recorded"
+                    : "Sent \(Int(payload.minutes))m to \(landedOn)\(finished ? " - target met" : "")")
                 return true
             }
             // A bad token or a missing habit will not fix itself by retrying,
@@ -141,7 +157,7 @@ final class JournalBuddySync: ObservableObject {
         let id = UUID().uuidString
         let now = Date()
         let probe = Payload(
-            habit: habitName, minutes: 1,
+            habit: habitName, fallback_habit: nil, minutes: 1,
             started_at: stamp.string(from: now.addingTimeInterval(-60)),
             ended_at: stamp.string(from: now),
             source: "Pomodoro", external_id: id, notes: "connection test"
