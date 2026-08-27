@@ -48,6 +48,7 @@
 		9F591480F4F716BDBDCB90C4 /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78A6A3CA075C9FFA8CE14A5A /* AchievementsView.swift */; };
 		A82DED8B106473217A8A58C3 /* PomodoroWatchWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 25B76C640FC27ED8B3BA1105 /* PomodoroWatchWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB69F235315336AB18D62694 /* StatsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913AA668C2A03947E1DDA0B7 /* StatsService.swift */; };
+		AB69F235315336AB18D62695 /* JournalBuddySync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913AA668C2A03947E1DDA0B8 /* JournalBuddySync.swift */; };
 		AFEF05D38235CFE8E988146D /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCFA3BAD7F341C63DEFD06D /* Colors.swift */; };
 		B8B61EF41560F240997F58A5 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCFA3BAD7F341C63DEFD06D /* Colors.swift */; };
 		BD41794837BAB4FCD4D0993C /* WatchTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69F9BE877F71C255F3F5A80 /* WatchTimerView.swift */; };
@@ -158,6 +159,7 @@
 		7B74548553857E323CE20A05 /* PomodoroLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroLiveActivity.swift; sourceTree = "<group>"; };
 		8F3F41736F30C2F2A940E988 /* Routine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routine.swift; sourceTree = "<group>"; };
 		913AA668C2A03947E1DDA0B7 /* StatsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsService.swift; sourceTree = "<group>"; };
+		913AA668C2A03947E1DDA0B8 /* JournalBuddySync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalBuddySync.swift; sourceTree = "<group>"; };
 		92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
 		9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9B7BDE78E5E0C085557053EC /* TimerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlsView.swift; sourceTree = "<group>"; };
@@ -304,6 +306,7 @@
 				A191EAC8F21E3B3423DDE32B /* RoutineSyncService.swift */,
 				92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */,
 				913AA668C2A03947E1DDA0B7 /* StatsService.swift */,
+				913AA668C2A03947E1DDA0B8 /* JournalBuddySync.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -589,6 +592,7 @@
 				49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */,
 				595FA4890D51A1F098025580 /* SpotifyService.swift in Sources */,
 				AB69F235315336AB18D62694 /* StatsService.swift in Sources */,
+				AB69F235315336AB18D62695 /* JournalBuddySync.swift in Sources */,
 				4E8939235A35A280A7559A03 /* StatsView.swift in Sources */,
 				88644C4522C8F6258008F966 /* StudySession.swift in Sources */,
 				FB3C50C7B23212DB2BD9D4C5 /* TagManagementView.swift in Sources */,

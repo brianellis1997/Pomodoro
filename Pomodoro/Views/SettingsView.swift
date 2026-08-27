@@ -4,6 +4,10 @@ import UserNotifications
 import EventKit
 
 struct SettingsView: View {
+    @StateObject private var sync = JournalBuddySync.shared
+    @State private var jbEnabled = JournalBuddySync.shared.isEnabled
+    @State private var jbHabit = JournalBuddySync.shared.habitName
+    @State private var jbToken = JournalBuddySync.shared.token
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsArray: [AppSettings]
     @State private var showingCalendarPermission = false
@@ -25,6 +29,7 @@ struct SettingsView: View {
                 timerBehaviorSection
                 musicSection
                 integrationsSection
+                journalBuddySection
                 tagsSection
                 aboutSection
                 debugSection
@@ -214,6 +219,59 @@ struct SettingsView: View {
             }
         } header: {
             Label("Integrations", systemImage: "link")
+        }
+    }
+
+
+    private var journalBuddySection: some View {
+        Section {
+            Toggle("Send sessions to JournalBuddy", isOn: Binding(
+                get: { jbEnabled },
+                set: { jbEnabled = $0; JournalBuddySync.shared.isEnabled = $0 }
+            ))
+
+            if jbEnabled {
+                HStack {
+                    Text("Habit")
+                    Spacer()
+                    TextField("Work", text: Binding(
+                        get: { jbHabit },
+                        set: { jbHabit = $0; JournalBuddySync.shared.habitName = $0 }
+                    ))
+                    .multilineTextAlignment(.trailing)
+                    .foregroundColor(.secondary)
+                    .autocorrectionDisabled()
+                }
+
+                SecureField("Ingest token", text: Binding(
+                    get: { jbToken },
+                    set: { jbToken = $0; JournalBuddySync.shared.token = $0 }
+                ))
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+
+                Button("Test connection") {
+                    Task { await JournalBuddySync.shared.testConnection() }
+                }
+                .disabled(jbToken.isEmpty)
+
+                if !sync.lastResult.isEmpty {
+                    Text(sync.lastResult)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                if sync.pendingCount > 0 {
+                    Button("Retry \(sync.pendingCount) queued session\(sync.pendingCount == 1 ? "" : "s")") {
+                        JournalBuddySync.shared.flushQueue()
+                    }
+                    .font(.caption)
+                }
+            }
+        } header: {
+            Label("JournalBuddy", systemImage: "arrow.up.forward.app")
+        } footer: {
+            Text("Finished sessions are recorded against a habit in JournalBuddy, so the same block is not timed twice. Get the token from JournalBuddy under Profile. It can only add sessions.")
         }
     }
 

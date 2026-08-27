@@ -161,6 +161,16 @@ class StatsService: ObservableObject {
 
         context.insert(session)
 
+        // The timer that measured this reports it, so JournalBuddy stops
+        // approximating the same block with a separate monolithic timer.
+        JournalBuddySync.shared.record(
+            id: session.id,
+            routineName: routineName,
+            minutes: durationMinutes,
+            endedAt: session.completedAt,
+            wasFullSession: session.wasFullSession
+        )
+
         if var stats = userStats {
             stats.totalPoints += pointsEarned
             stats.totalSessionsCompleted += 1
