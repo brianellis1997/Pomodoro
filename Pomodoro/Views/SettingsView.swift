@@ -272,35 +272,67 @@ struct SettingsView: View {
         }
 
         if jbEnabled && !sync.habits.isEmpty {
-            Section {
-                ForEach(allRoutineNames, id: \.self) { routine in
-                    Picker(routine, selection: Binding(
-                        get: { sync.habitId(forRoutine: routine) ?? "" },
-                        set: { JournalBuddySync.shared.setHabit($0.isEmpty ? nil : $0, forRoutine: routine) }
-                    )) {
-                        Text("Don't send").tag("")
-                        ForEach(sync.habits) { habit in
-                            Text(habit.name).tag(habit.id)
-                        }
+            ForEach(allRoutines, id: \.name) { routine in
+                Section {
+                    HabitPickerRow(
+                        label: "Whole routine",
+                        subtitle: "Used by any step below that has no habit of its own",
+                        inheritLabel: nil,
+                        selection: Binding(
+                            get: { sync.habitId(forRoutine: routine.name) },
+                            set: { JournalBuddySync.shared.setHabit($0, forRoutine: routine.name) }
+                        ),
+                        habits: sync.habits
+                    )
+
+                    ForEach(Array(routine.stepLabels.enumerated()), id: \.offset) { _, label in
+                        HabitPickerRow(
+                            label: label,
+                            subtitle: nil,
+                            inheritLabel: routineChoiceLabel(routine.name),
+                            selection: Binding(
+                                get: { sync.stepOverride(forRoutine: routine.name, step: label) },
+                                set: { JournalBuddySync.shared.setHabit($0, forRoutine: routine.name, step: label) }
+                            ),
+                            habits: sync.habits
+                        )
                     }
+                } header: {
+                    Label(routine.name, systemImage: "arrow.triangle.branch")
                 }
-            } header: {
-                Label("Routines", systemImage: "arrow.triangle.branch")
+            }
+
+            Section {
+                EmptyView()
             } footer: {
-                Text("Each routine goes to the habit you choose. A routine set to \"Don't send\" records nothing, which is also what a new routine does until you map it.")
+                Text("Each step of a routine is reported on its own, so a reading block inside the work day lands on Reading rather than disappearing into Work. A step with no habit of its own uses the routine's. Anything left on \"Don't send\" records nothing.")
             }
         }
     }
 
-    /// Presets and custom routines together, in the order they are offered.
-    private var allRoutineNames: [String] {
-        var seen = Set<String>()
-        var names: [String] = []
-        for name in RoutineConfiguration.presets.map(\.name) + customRoutines.map(\.name) {
-            if seen.insert(name).inserted { names.append(name) }
+    /// What a step inherits when it has no habit of its own.
+    private func routineChoiceLabel(_ routine: String) -> String {
+        if let id = sync.habitId(forRoutine: routine),
+           let name = sync.habits.first(where: { $0.id == id })?.name {
+            return "Same as routine (\(name))"
         }
-        return names
+        return "Don't send"
     }
+
+    /// Every routine with the labels of its steps, presets first.
+    private var allRoutines: [(name: String, stepLabels: [String])] {
+        var seen = Set<String>()
+        var out: [(name: String, stepLabels: [String])] = []
+        for preset in RoutineConfiguration.presets where seen.insert(preset.name).inserted {
+            out.append((preset.name, preset.steps.indices.map { preset.steps.displayLabel(at: $0) }))
+        }
+        for routine in customRoutines where seen.insert(routine.name).inserted {
+            let steps = routine.resolvedSteps()
+            out.append((routine.name, steps.indices.map { steps.displayLabel(at: $0) }))
+        }
+        return out
+    }
+
 
     private var tagsSection: some View {
         Section {

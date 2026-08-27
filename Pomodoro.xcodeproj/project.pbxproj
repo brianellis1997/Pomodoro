@@ -25,6 +25,7 @@
 		482831126D0EDFD2AA8E4FEA /* PomodoroWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8F6582483D53F45D221A35D /* PomodoroWatchWidget.swift */; };
 		4950FC50FE027FAA1A43F504 /* PomodoroApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B23EEFFB7247980C622713 /* PomodoroApp.swift */; };
 		49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */; };
+		49D54B0231FAEDCE4FC5296A /* HabitPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AAB1DFB44BEA94C764EBDC0 /* HabitPickerView.swift */; };
 		4B49298E2F9FCAD2F3E1F30B /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DED7AE7D7463F5717CCE0C8 /* WatchConnectivityManager.swift */; };
 		4BB15B86A83E005E471D3648 /* TimerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C353FADFBAFFF3B678B2267E /* TimerEngine.swift */; };
 		4E8939235A35A280A7559A03 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37381671A153838D503EE9C5 /* StatsView.swift */; };
@@ -162,6 +163,7 @@
 		913AA668C2A03947E1DDA0B8 /* JournalBuddySync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalBuddySync.swift; sourceTree = "<group>"; };
 		92726A9B1A8D77ABE85DE588 /* SpotifyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyService.swift; sourceTree = "<group>"; };
 		9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9AAB1DFB44BEA94C764EBDC0 /* HabitPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitPickerView.swift; sourceTree = "<group>"; };
 		9B7BDE78E5E0C085557053EC /* TimerControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerControlsView.swift; sourceTree = "<group>"; };
 		A191EAC8F21E3B3423DDE32B /* RoutineSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineSyncService.swift; sourceTree = "<group>"; };
 		A1C886CE6E6CE66FFC97EF4C /* PomodoroWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PomodoroWatchWidget.entitlements; sourceTree = "<group>"; };
@@ -205,6 +207,7 @@
 				1FB55028DCAD027BE679B53D /* MainTabView.swift */,
 				63CD41765F12DA0A534BEA0F /* RoutineBuilderView.swift */,
 				9AAB1DFB44BEA94C764EBDB2 /* SettingsView.swift */,
+				9AAB1DFB44BEA94C764EBDC0 /* HabitPickerView.swift */,
 				37381671A153838D503EE9C5 /* StatsView.swift */,
 				D7A29DA84739FA9BEC68F16D /* TagManagementView.swift */,
 				DC8D99F625247939824CF210 /* TimerView.swift */,
@@ -590,6 +593,7 @@
 				77661E592CB48B044BE3CC25 /* SessionTag.swift in Sources */,
 				FFFFAAAA000000000000B004 /* SessionStep.swift in Sources */,
 				49D54B0231FAEDCE4FC5295F /* SettingsView.swift in Sources */,
+				49D54B0231FAEDCE4FC5296A /* HabitPickerView.swift in Sources */,
 				595FA4890D51A1F098025580 /* SpotifyService.swift in Sources */,
 				AB69F235315336AB18D62694 /* StatsService.swift in Sources */,
 				AB69F235315336AB18D62695 /* JournalBuddySync.swift in Sources */,

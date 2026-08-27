@@ -33,6 +33,13 @@ class TimerEngine: ObservableObject {
     var autoStartBreaks: Bool = false
     var autoStartWork: Bool = false
     var onPhaseComplete: ((TimerPhase) -> Void)?
+    /// The step that just finished, and how long it ran.
+    ///
+    /// A routine is not one block. A work routine holds focus steps, breaks,
+    /// and often a labelled step that is a different activity entirely - thirty
+    /// minutes of reading inside the work day. Reporting only the routine total
+    /// makes those invisible and forces the reading to be logged twice.
+    var onStepComplete: ((SessionStep, Int) -> Void)?
     var onPhaseAdvanced: (() -> Void)?
     var onAutoStart: (() -> Void)?
     var onWorkPhaseSkipped: ((Int) -> Void)?
@@ -171,6 +178,11 @@ class TimerEngine: ObservableObject {
 
         let completedPhase = phase
         let completedPhaseDurationMinutes = Int(totalTime / 60)
+        // Fired before advancePhase, while currentStepIndex still names the
+        // step that just ended.
+        if steps.indices.contains(currentStepIndex) {
+            onStepComplete?(steps[currentStepIndex], completedPhaseDurationMinutes)
+        }
         onPhaseComplete?(completedPhase)
 
         advancePhase()

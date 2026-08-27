@@ -91,6 +91,16 @@ class TimerViewModel: ObservableObject {
             self?.handlePhaseComplete(completedPhase)
         }
 
+        engine.onStepComplete = { [weak self] step, minutes in
+            guard let self else { return }
+            let label = self.engine.steps.displayLabel(at: self.engine.currentStepIndex)
+            JournalBuddySync.shared.recordStep(
+                routineName: self.currentRoutineName,
+                stepLabel: label,
+                minutes: minutes
+            )
+        }
+
         engine.onPhaseAdvanced = { [weak self] in
             self?.handlePhaseAdvanced()
         }

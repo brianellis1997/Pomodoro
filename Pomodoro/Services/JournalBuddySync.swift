@@ -6,10 +6,17 @@ import Foundation
 /// app already knows what actually happened inside it. Rather than logging the
 /// same block twice, the timer that measured it reports it.
 ///
-/// Each routine is mapped to a habit explicitly. There is deliberately no
-/// default and no fallback: a routine nobody has mapped sends nothing. An
-/// unmapped routine quietly landing on Work would credit work that never
-/// happened, and a record that invents an hour is worse than one that misses.
+/// Steps, not routines, are what get reported. A work routine holds focus
+/// blocks, breaks, and often a labelled step that is a different activity
+/// entirely - thirty minutes of reading inside the work day - and collapsing
+/// that into one total is what forced the reading to be logged twice.
+///
+/// Each routine and each step is mapped explicitly, and nothing is mapped by
+/// default. A step with no mapping of its own uses the routine's, which is a
+/// choice made in the picker rather than a hidden default; a routine nobody
+/// has mapped sends nothing at all. An unmapped step quietly landing on Work
+/// would credit work that never happened, and a record that invents an hour is
+/// worse than one that misses.
 @MainActor
 final class JournalBuddySync: ObservableObject {
     static let shared = JournalBuddySync()
@@ -66,6 +73,27 @@ final class JournalBuddySync: ObservableObject {
 
     func habitId(forRoutine routine: String) -> String? { routeMap[routine] }
 
+    /// A step's own habit, falling back to the routine's.
+    ///
+    /// This fallback is a choice the user made in the picker above, not a
+    /// hidden default: a routine nobody has mapped is still "Don't send", so a
+    /// new routine records nothing until it is pointed somewhere.
+    func habitId(forRoutine routine: String, step: String) -> String? {
+        routeMap[Self.stepKey(routine, step)] ?? routeMap[routine]
+    }
+
+    func stepOverride(forRoutine routine: String, step: String) -> String? {
+        routeMap[Self.stepKey(routine, step)]
+    }
+
+    func setHabit(_ habitId: String?, forRoutine routine: String, step: String) {
+        setHabit(habitId, forRoutine: Self.stepKey(routine, step))
+    }
+
+    /// Keyed on the label the user sees, because a step's UUID is regenerated
+    /// every launch for the built-in routines.
+    static func stepKey(_ routine: String, _ step: String) -> String { "\(routine)\u{1F}\(step)" }
+
     func habitName(forRoutine routine: String) -> String? {
         guard let id = routeMap[routine] else { return nil }
         return habits.first { $0.id == id }?.name
@@ -92,14 +120,19 @@ final class JournalBuddySync: ObservableObject {
         let notes: String?
     }
 
-    /// Record a finished session, if this routine has been mapped to a habit.
-    func record(id: UUID, routineName: String, minutes: Int, endedAt: Date = Date(), wasFullSession: Bool) {
+    /// Record one finished step of a routine.
+    ///
+    /// Steps are reported rather than the routine total, so a thirty minute
+    /// reading block inside the work day lands on Reading instead of
+    /// disappearing into eight hours of Work.
+    func recordStep(routineName: String, stepLabel: String, minutes: Int) {
         guard isConfigured, minutes > 0 else { return }
-        guard let habitId = habitId(forRoutine: routineName) else {
-            // Not an error. Nobody said where this routine belongs, so the only
-            // honest thing to record is nothing.
-            return
-        }
+        guard let habitId = habitId(forRoutine: routineName, step: stepLabel) else { return }
+        send(habitId: habitId, minutes: minutes, note: "\(routineName) · \(stepLabel)",
+             externalId: "\(routineName)-\(stepLabel)-\(Int(Date().timeIntervalSince1970))")
+    }
+
+    private func send(habitId: String, minutes: Int, note: String, externalId: String, endedAt: Date = Date()) {
 
         // The offset matters. Sent without one, a 10pm session is read in the
         // server's zone and filed under tomorrow.
@@ -113,12 +146,12 @@ final class JournalBuddySync: ObservableObject {
             started_at: stamp.string(from: endedAt.addingTimeInterval(-Double(minutes) * 60)),
             ended_at: stamp.string(from: endedAt),
             source: "Pomodoro",
-            // The session's own id, so a retry cannot bank the same minutes twice.
-            external_id: id.uuidString,
-            notes: wasFullSession ? routineName : "\(routineName) (partial)"
+            // Unique per step, so a retry cannot bank the same minutes twice.
+            external_id: externalId,
+            notes: note
         )
 
-        Task { await send(payload, queueOnFailure: true) }
+        Task { await post(payload, queueOnFailure: true) }
     }
 
     /// Retry anything an earlier send could not deliver.
@@ -128,12 +161,12 @@ final class JournalBuddySync: ObservableObject {
         guard !pending.isEmpty else { return }
         defaults.removeObject(forKey: Key.queue)
         Task {
-            for payload in pending { await send(payload, queueOnFailure: true) }
+            for payload in pending { await post(payload, queueOnFailure: true) }
         }
     }
 
     @discardableResult
-    private func send(_ payload: Payload, queueOnFailure: Bool) async -> Bool {
+    private func post(_ payload: Payload, queueOnFailure: Bool) async -> Bool {
         var request = URLRequest(url: sessionURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
