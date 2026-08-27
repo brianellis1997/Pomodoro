@@ -5,10 +5,9 @@ import EventKit
 
 struct SettingsView: View {
     @StateObject private var sync = JournalBuddySync.shared
+    @Query(sort: \Routine.createdAt, order: .reverse) private var customRoutines: [Routine]
     @State private var jbEnabled = JournalBuddySync.shared.isEnabled
-    @State private var jbHabit = JournalBuddySync.shared.habitName
     @State private var jbToken = JournalBuddySync.shared.token
-    @State private var jbRouteByRoutine = JournalBuddySync.shared.routeByRoutine
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsArray: [AppSettings]
     @State private var showingCalendarPermission = false
@@ -224,6 +223,7 @@ struct SettingsView: View {
     }
 
 
+    @ViewBuilder
     private var journalBuddySection: some View {
         Section {
             Toggle("Send sessions to JournalBuddy", isOn: Binding(
@@ -232,18 +232,6 @@ struct SettingsView: View {
             ))
 
             if jbEnabled {
-                HStack {
-                    Text("Habit")
-                    Spacer()
-                    TextField("Work", text: Binding(
-                        get: { jbHabit },
-                        set: { jbHabit = $0; JournalBuddySync.shared.habitName = $0 }
-                    ))
-                    .multilineTextAlignment(.trailing)
-                    .foregroundColor(.secondary)
-                    .autocorrectionDisabled()
-                }
-
                 SecureField("Ingest token", text: Binding(
                     get: { jbToken },
                     set: { jbToken = $0; JournalBuddySync.shared.token = $0 }
@@ -251,16 +239,18 @@ struct SettingsView: View {
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
 
-                Toggle("Match habit to routine name", isOn: Binding(
-                    get: { jbRouteByRoutine },
-                    set: { jbRouteByRoutine = $0; JournalBuddySync.shared.routeByRoutine = $0 }
-                ))
-                .font(.callout)
-
-                Button("Test connection") {
-                    Task { await JournalBuddySync.shared.testConnection() }
+                Button {
+                    Task { await sync.loadHabits() }
+                } label: {
+                    HStack {
+                        Text(sync.habits.isEmpty ? "Connect" : "Refresh habits")
+                        if sync.isLoadingHabits {
+                            Spacer()
+                            ProgressView()
+                        }
+                    }
                 }
-                .disabled(jbToken.isEmpty)
+                .disabled(jbToken.isEmpty || sync.isLoadingHabits)
 
                 if !sync.lastResult.isEmpty {
                     Text(sync.lastResult)
@@ -278,8 +268,38 @@ struct SettingsView: View {
         } header: {
             Label("JournalBuddy", systemImage: "arrow.up.forward.app")
         } footer: {
-            Text("Finished sessions are recorded against a habit in JournalBuddy, so the same block is not timed twice. With routine matching on, a routine named \"Studying\" lands on a habit called Studying, falling back to the one above. Get the token from JournalBuddy under Profile: it can only add sessions.")
+            Text("Get the token from JournalBuddy under Profile → Connected Apps. It can add sessions and read your habit names, nothing else.")
         }
+
+        if jbEnabled && !sync.habits.isEmpty {
+            Section {
+                ForEach(allRoutineNames, id: \.self) { routine in
+                    Picker(routine, selection: Binding(
+                        get: { sync.habitId(forRoutine: routine) ?? "" },
+                        set: { JournalBuddySync.shared.setHabit($0.isEmpty ? nil : $0, forRoutine: routine) }
+                    )) {
+                        Text("Don't send").tag("")
+                        ForEach(sync.habits) { habit in
+                            Text(habit.name).tag(habit.id)
+                        }
+                    }
+                }
+            } header: {
+                Label("Routines", systemImage: "arrow.triangle.branch")
+            } footer: {
+                Text("Each routine goes to the habit you choose. A routine set to \"Don't send\" records nothing, which is also what a new routine does until you map it.")
+            }
+        }
+    }
+
+    /// Presets and custom routines together, in the order they are offered.
+    private var allRoutineNames: [String] {
+        var seen = Set<String>()
+        var names: [String] = []
+        for name in RoutineConfiguration.presets.map(\.name) + customRoutines.map(\.name) {
+            if seen.insert(name).inserted { names.append(name) }
+        }
+        return names
     }
 
     private var tagsSection: some View {
