@@ -91,13 +91,14 @@ class TimerViewModel: ObservableObject {
             self?.handlePhaseComplete(completedPhase)
         }
 
-        engine.onStepComplete = { [weak self] step, minutes in
+        engine.onStepComplete = { [weak self] step, minutes, endedAt in
             guard let self else { return }
             let label = self.engine.steps.displayLabel(at: self.engine.currentStepIndex)
             JournalBuddySync.shared.recordStep(
                 routineName: self.currentRoutineName,
                 stepLabel: label,
-                minutes: minutes
+                minutes: minutes,
+                endedAt: endedAt
             )
         }
 
@@ -542,8 +543,11 @@ class TimerViewModel: ObservableObject {
                 defaults?.removeObject(forKey: "savedSessionStartTime")
             }
 
-            engine.timeRemaining = 0
-            engine.skip()
+            // Reported rather than skipped: these steps ran, the app was just
+            // not awake to watch. `endDate` is when the first of them finished
+            // and the clock walks forward from there.
+            var reportedClock = endDate
+            engine.consumeElapsedStep(endedAt: reportedClock)
             DebugLog.shared.log("[Restore] After first skip: phase=\(engine.phase.rawValue) currentStepIdx=\(engine.currentStepIndex) totalTime=\(engine.totalTime)s timeRemaining=\(engine.timeRemaining)s didWrap=\(engine.didWrapRoutine)")
 
             var phasesAdvanced = 1
@@ -568,8 +572,8 @@ class TimerViewModel: ObservableObject {
                 }
 
                 overflowTime -= currentPhaseDuration
-                engine.timeRemaining = 0
-                engine.skip()
+                reportedClock = reportedClock.addingTimeInterval(currentPhaseDuration)
+                engine.consumeElapsedStep(endedAt: reportedClock)
                 phasesAdvanced += 1
             }
 

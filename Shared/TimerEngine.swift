@@ -39,7 +39,7 @@ class TimerEngine: ObservableObject {
     /// and often a labelled step that is a different activity entirely - thirty
     /// minutes of reading inside the work day. Reporting only the routine total
     /// makes those invisible and forces the reading to be logged twice.
-    var onStepComplete: ((SessionStep, Int) -> Void)?
+    var onStepComplete: ((SessionStep, Int, Date) -> Void)?
     var onPhaseAdvanced: (() -> Void)?
     var onAutoStart: (() -> Void)?
     var onWorkPhaseSkipped: ((Int) -> Void)?
@@ -142,6 +142,19 @@ class TimerEngine: ObservableObject {
         }
     }
 
+    /// Skip a step that has already elapsed, reporting it as it goes.
+    ///
+    /// `skip()` deliberately reports nothing, because a step the user chose to
+    /// skip did not happen. A step the clock ran through while the app was
+    /// closed did happen, and the two must not share a path.
+    func consumeElapsedStep(endedAt: Date) {
+        if steps.indices.contains(currentStepIndex) {
+            onStepComplete?(steps[currentStepIndex], Int(currentStepDuration() / 60), endedAt)
+        }
+        timeRemaining = 0
+        skip()
+    }
+
     func skip() {
         timer?.invalidate()
         timer = nil
@@ -173,6 +186,11 @@ class TimerEngine: ObservableObject {
         } else {
             overflowFromEndDate = 0
         }
+        // When the step actually ended, which is not now if the app was
+        // suspended through it. Reporting these as "now" would stack a day of
+        // sessions on one instant, and anything merging overlapping spans
+        // would read eight hours as fifty minutes.
+        let stepEndedAt = endDate ?? Date()
         endDate = nil
         state = .idle
 
@@ -181,7 +199,7 @@ class TimerEngine: ObservableObject {
         // Fired before advancePhase, while currentStepIndex still names the
         // step that just ended.
         if steps.indices.contains(currentStepIndex) {
-            onStepComplete?(steps[currentStepIndex], completedPhaseDurationMinutes)
+            onStepComplete?(steps[currentStepIndex], completedPhaseDurationMinutes, stepEndedAt)
         }
         onPhaseComplete?(completedPhase)
 
@@ -196,7 +214,7 @@ class TimerEngine: ObservableObject {
         print("[TimerEngine] timerCompleted phase=\(completedPhase.rawValue) → \(phase.rawValue) overflow=\(overflowFromEndDate)s didWrapRoutine=\(didWrapRoutine) shouldAutoStart=\(shouldAutoStart) (autoBreaks=\(autoStartBreaks) autoWork=\(autoStartWork))")
 
         if shouldAutoStart {
-            let remainingOverflow = consumeOverflowChain(initial: overflowFromEndDate)
+            let remainingOverflow = consumeOverflowChain(initial: overflowFromEndDate, from: stepEndedAt)
             if didWrapRoutine {
                 return
             }
@@ -211,8 +229,15 @@ class TimerEngine: ObservableObject {
         }
     }
 
-    private func consumeOverflowChain(initial: TimeInterval) -> TimeInterval {
+    /// Fast-forward through steps that elapsed while the app was suspended.
+    ///
+    /// These used to advance silently, which is why a full eight hour routine
+    /// reported under six: only the steps that happened to finish with the app
+    /// open were ever reported. Each one is announced with the time it really
+    /// ended, walked forward from the end of the step that woke us.
+    private func consumeOverflowChain(initial: TimeInterval, from base: Date) -> TimeInterval {
         var remaining = initial
+        var clock = base
         let maxChain = 16
         var advances = 0
         while remaining > 0 && !didWrapRoutine && advances < maxChain {
@@ -227,6 +252,8 @@ class TimerEngine: ObservableObject {
             if kind == .focus {
                 onWorkPhaseSkipped?(Int(currentDuration / 60))
             }
+            clock = clock.addingTimeInterval(currentDuration)
+            onStepComplete?(steps[safeIndex], Int(currentDuration / 60), clock)
             remaining -= currentDuration
             advancePhase()
             advances += 1

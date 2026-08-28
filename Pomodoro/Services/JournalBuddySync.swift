@@ -125,11 +125,14 @@ final class JournalBuddySync: ObservableObject {
     /// Steps are reported rather than the routine total, so a thirty minute
     /// reading block inside the work day lands on Reading instead of
     /// disappearing into eight hours of Work.
-    func recordStep(routineName: String, stepLabel: String, minutes: Int) {
+    func recordStep(routineName: String, stepLabel: String, minutes: Int, endedAt: Date = Date()) {
         guard isConfigured, minutes > 0 else { return }
         guard let habitId = habitId(forRoutine: routineName, step: stepLabel) else { return }
         send(habitId: habitId, minutes: minutes, note: "\(routineName) · \(stepLabel)",
-             externalId: "\(routineName)-\(stepLabel)-\(Int(Date().timeIntervalSince1970))")
+             // Keyed on when the step ended rather than when it was sent, so a
+             // restore that replays the same elapsed steps cannot bank them twice.
+             externalId: "\(routineName)-\(stepLabel)-\(Int(endedAt.timeIntervalSince1970))",
+             endedAt: endedAt)
     }
 
     private func send(habitId: String, minutes: Int, note: String, externalId: String, endedAt: Date = Date()) {
